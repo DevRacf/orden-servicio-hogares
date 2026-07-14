@@ -4,7 +4,7 @@
   --acento: #008891;
   --fondo: #f4f7f9;
   --texto: #1c2b36;
-  --gris: #7a8a99;
+  --gris: #5c6b78;
   --rojo: #c0392b;
   --blanco: #ffffff;
 }
@@ -27,7 +27,7 @@ body {
   padding: 0.8rem 1rem;
 }
 
-.marca { font-weight: 700; letter-spacing: 0.02em; }
+.marca { font-size: 1.05rem; margin: 0; font-weight: 700; letter-spacing: 0.02em; }
 
 main { max-width: 640px; margin: 0 auto; padding: 1rem; }
 
@@ -70,9 +70,11 @@ button.liga {
   width: auto;
   background: none;
   color: var(--azul-claro);
-  padding: 0.3rem 0;
+  padding: 0.6rem 0;
   font-weight: 600;
 }
+
+.encabezado .liga { color: var(--blanco); }
 
 .volver { display: inline-block; margin-bottom: 0.5rem; color: var(--azul-claro); text-decoration: none; font-weight: 600; }
 
