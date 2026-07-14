@@ -43,7 +43,7 @@ export async function listarOrdenes() {
 
 export async function obtenerOrden(id) {
   const { data, error } = await obtenerCliente()
-    .from('ordenes').select('*').eq('id', id).single();
+    .from('ordenes').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   return data;
 }
