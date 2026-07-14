@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Órdenes de Servicio — Hogares Inteligentes</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="encabezado">
+    <span class="marca">Hogares Inteligentes</span>
+    <button id="btn-salir" class="oculto liga" type="button">Salir</button>
+  </header>
+
+  <main id="app">
+    <!-- Vista: entrar -->
+    <section id="vista-login" class="vista oculto">
+      <h2>Orden de servicio</h2>
+      <form id="form-login">
+        <label for="clave">Clave de acceso</label>
+        <input type="password" id="clave" required autocomplete="current-password">
+        <p id="error-login" class="error oculto"></p>
+        <button type="submit">Entrar</button>
+      </form>
+    </section>
+
+    <!-- Vista: lista de órdenes -->
+    <section id="vista-lista" class="vista oculto">
+      <a href="#/nueva" class="boton">+ Nueva orden</a>
+      <h2>Pendientes</h2>
+      <div id="lista-pendientes"></div>
+      <h2>Completadas</h2>
+      <div id="lista-completadas"></div>
+    </section>
+
+    <!-- Vista: nueva orden -->
+    <section id="vista-nueva" class="vista oculto">
+      <a href="#/" class="volver">← Órdenes</a>
+      <h2>Nueva orden</h2>
+      <form id="form-nueva">
+        <label>Nombre del cliente
+          <input name="cliente_nombre" required>
+        </label>
+        <label>Teléfono
+          <input name="cliente_telefono" type="tel">
+        </label>
+        <label>Dirección
+          <textarea name="cliente_direccion" rows="2" required></textarea>
+        </label>
+        <label>Tipo de cliente
+          <select name="tipo_cliente">
+            <option value="hogar">Hogar</option>
+            <option value="empresa">Empresa</option>
+          </select>
+        </label>
+        <label>Tipo de servicio
+          <select name="tipo_servicio">
+            <option value="camaras">Cámaras</option>
+            <option value="audio">Audio</option>
+            <option value="internet">Internet</option>
+            <option value="pantallas">Pantallas</option>
+            <option value="mantenimiento">Mantenimiento</option>
+            <option value="otro">Otro</option>
+          </select>
+        </label>
+        <label>Descripción de lo solicitado
+          <textarea name="descripcion" rows="3"></textarea>
+        </label>
+        <label>Técnico asignado
+          <select name="tecnico" id="select-tecnico"></select>
+        </label>
+        <p id="error-nueva" class="error oculto"></p>
+        <button type="submit">Crear orden</button>
+      </form>
+    </section>
+
+    <!-- Vista: detalle / completar orden -->
+    <section id="vista-orden" class="vista oculto">
+      <a href="#/" class="volver">← Órdenes</a>
+      <div id="orden-datos"></div>
+      <form id="form-completar" class="oculto">
+        <h3>Trabajo realizado</h3>
+        <textarea id="trabajo-realizado" rows="4"
+          placeholder="Describe lo que se instaló o reparó"></textarea>
+        <h3>Materiales y equipos</h3>
+        <div id="filas-materiales"></div>
+        <button type="button" id="btn-agregar-material" class="liga">+ Agregar material</button>
+        <h3>Firma del técnico</h3>
+        <canvas id="firma-tecnico" class="firma"></canvas>
+        <button type="button" data-limpia="tecnico" class="liga">Limpiar firma</button>
+        <h3>Firma del cliente</h3>
+        <canvas id="firma-cliente" class="firma"></canvas>
+        <button type="button" data-limpia="cliente" class="liga">Limpiar firma</button>
+        <p id="error-completar" class="error oculto"></p>
+        <button type="submit">Guardar y completar</button>
+      </form>
+      <button id="btn-pdf" class="oculto" type="button">Descargar / compartir PDF</button>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2/dist/jspdf.umd.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

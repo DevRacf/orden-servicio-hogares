@@ -1,0 +1,114 @@
+:root {
+  --azul: #0f3057;
+  --azul-claro: #00587a;
+  --acento: #008891;
+  --fondo: #f4f7f9;
+  --texto: #1c2b36;
+  --gris: #7a8a99;
+  --rojo: #c0392b;
+  --blanco: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--azul);
+  color: var(--blanco);
+  padding: 0.8rem 1rem;
+}
+
+.marca { font-weight: 700; letter-spacing: 0.02em; }
+
+main { max-width: 640px; margin: 0 auto; padding: 1rem; }
+
+.oculto { display: none !important; }
+
+h2 { font-size: 1.15rem; margin: 1.2rem 0 0.6rem; }
+h3 { font-size: 1rem; margin: 1.2rem 0 0.4rem; }
+
+form label { display: block; margin-bottom: 0.8rem; font-weight: 600; font-size: 0.9rem; }
+
+input, textarea, select {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.6rem;
+  font: inherit;
+  font-weight: 400;
+  border: 1px solid #c8d3dc;
+  border-radius: 8px;
+  background: var(--blanco);
+}
+
+button, .boton {
+  display: inline-block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--blanco);
+  background: var(--acento);
+  border: none;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button.liga {
+  width: auto;
+  background: none;
+  color: var(--azul-claro);
+  padding: 0.3rem 0;
+  font-weight: 600;
+}
+
+.volver { display: inline-block; margin-bottom: 0.5rem; color: var(--azul-claro); text-decoration: none; font-weight: 600; }
+
+.error { color: var(--rojo); font-size: 0.9rem; }
+.vacio { color: var(--gris); font-size: 0.9rem; }
+
+.tarjeta {
+  display: block;
+  background: var(--blanco);
+  border: 1px solid #dfe7ed;
+  border-radius: 10px;
+  padding: 0.8rem;
+  margin-bottom: 0.6rem;
+  color: inherit;
+  text-decoration: none;
+}
+.tarjeta span { display: block; color: var(--gris); font-size: 0.85rem; margin-top: 0.2rem; }
+
+.estado { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 99px; vertical-align: middle; }
+.estado.pendiente { background: #fff3cd; color: #7a5c00; }
+.estado.completada { background: #d7f5e3; color: #14683c; }
+
+dl { background: var(--blanco); border: 1px solid #dfe7ed; border-radius: 10px; padding: 0.8rem; margin: 0; }
+dt { font-size: 0.78rem; color: var(--gris); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.6rem; }
+dt:first-child { margin-top: 0; }
+dd { margin: 0.1rem 0 0; }
+
+.fila-material { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
+.fila-material .cantidad { width: 5rem; flex: none; }
+.fila-material .quitar { width: 2.6rem; flex: none; margin-top: 0.3rem; background: #e5ecf1; color: var(--texto); }
+
+canvas.firma {
+  width: 100%;
+  height: 160px;
+  background: var(--blanco);
+  border: 1px dashed #9fb2c0;
+  border-radius: 8px;
+  touch-action: none;
+}
