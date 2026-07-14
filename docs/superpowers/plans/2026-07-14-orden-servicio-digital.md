@@ -710,17 +710,28 @@ function limpiarError(idParrafo) {
 }
 
 async function rutear() {
-  if (!(await datos.haySesion())) {
-    $('#btn-salir').classList.add('oculto');
-    mostrarVista('vista-login');
-    return;
+  try {
+    if (!(await datos.haySesion())) {
+      $('#btn-salir').classList.add('oculto');
+      mostrarVista('vista-login');
+      return;
+    }
+    $('#btn-salir').classList.remove('oculto');
+    const hash = location.hash || '#/';
+    const m = hash.match(/^#\/orden\/(.+)$/);
+    if (hash === '#/nueva') { await renderNueva(); return; }
+    if (m) { await renderOrden(m[1]); return; }
+    await renderLista();
+  } catch (err) {
+    // Cualquier lectura del backend (listarOrdenes, listarTecnicos, obtenerOrden,
+    // haySesion) puede rechazar en modo Supabase por falta de conexión; en modo
+    // demo esto nunca ocurre, así que solo se ejerce contra Supabase real.
+    console.error(err);
+    mostrarVista('vista-lista');
+    $('#lista-pendientes').innerHTML =
+      '<p class="error">No se pudo conectar. Revisa tu conexión e intenta de nuevo.</p>';
+    $('#lista-completadas').innerHTML = '';
   }
-  $('#btn-salir').classList.remove('oculto');
-  const hash = location.hash || '#/';
-  const m = hash.match(/^#\/orden\/(.+)$/);
-  if (hash === '#/nueva') return renderNueva();
-  if (m) return renderOrden(m[1]);
-  return renderLista();
 }
 
 // Placeholders que las tareas 5 y 6 reemplazan por renders reales:
