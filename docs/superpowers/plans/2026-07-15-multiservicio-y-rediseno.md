@@ -273,6 +273,11 @@ test('seccionesPdf junta un solo servicio sin coma de sobra', () => {
   const mapa = Object.fromEntries(seccionesPdf({ ...orden, servicios: ['pantallas'] }));
   assert.equal(mapa['Servicios'], 'Pantallas');
 });
+
+test('seccionesPdf usa guion si no hay servicios', () => {
+  const mapa = Object.fromEntries(seccionesPdf({ ...orden, servicios: [] }));
+  assert.equal(mapa['Servicios'], '—');
+});
 ```
 
 - [ ] **Step 2: Correr las pruebas y confirmar que fallan**
@@ -294,7 +299,7 @@ export function seccionesPdf(orden) {
     ['Teléfono', orden.cliente_telefono || '—'],
     ['Dirección', orden.cliente_direccion],
     ['Tipo de cliente', TIPOS_CLIENTE[orden.tipo_cliente] || orden.tipo_cliente],
-    ['Servicios', etiquetasServicios(orden.servicios).join(', ')],
+    ['Servicios', etiquetasServicios(orden.servicios).join(', ') || '—'],
     ['Técnico', orden.tecnico],
     ['Fecha de creación', formatearFecha(orden.created_at)],
     ['Fecha de cierre', formatearFecha(orden.completed_at)]
@@ -307,7 +312,7 @@ export function seccionesPdf(orden) {
 - [ ] **Step 4: Correr las pruebas y confirmar que pasan**
 
 Run: `npm test`
-Expected: PASS — 12 pruebas en verde (9 de `ordenes.test.js` + 3 de `pdf.test.js`).
+Expected: PASS — 13 pruebas en verde (9 de `ordenes.test.js` + 4 de `pdf.test.js`).
 
 - [ ] **Step 5: Commit**
 
@@ -822,7 +827,7 @@ Con datos nuevos, primero en escritorio y luego con `resize_window` a 375×812:
 - [ ] **Step 5: Correr las pruebas unitarias una vez más**
 
 Run: `npm test`
-Expected: PASS — 12 pruebas en verde (sin cambios respecto a la Tarea 2; este paso solo
+Expected: PASS — 13 pruebas en verde (sin cambios respecto a la Tarea 2; este paso solo
 confirma que el rediseño visual no rompió nada en la lógica).
 
 - [ ] **Step 6: Commit**
