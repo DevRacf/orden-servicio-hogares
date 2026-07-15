@@ -810,7 +810,7 @@ function escapar(texto) {
 
 function tarjetaOrden(o) {
   return `<a class="tarjeta" href="#/orden/${o.id}">
-    <strong>${o.folio}</strong> · ${escapar(o.cliente_nombre)}
+    <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}
     <span>${TIPOS_SERVICIO[o.tipo_servicio] || ''} — ${escapar(o.tecnico)}</span>
   </a>`;
 }
@@ -847,10 +847,14 @@ $('#form-nueva').addEventListener('submit', async (e) => {
   const v = validarNuevaOrden(d);
   if (!v.ok) return mostrarError('error-nueva', v.errores);
   limpiarError('error-nueva');
+  const boton = e.target.querySelector('button[type="submit"]');
+  boton.disabled = true;
   try {
     await datos.crearOrden(d);
   } catch {
     return mostrarError('error-nueva', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  } finally {
+    boton.disabled = false;
   }
   e.target.reset();
   navegar('#/');
@@ -903,7 +907,12 @@ export function crearPad(canvas) {
   return {
     limpiar: () => pad.clear(),
     vacia: () => pad.isEmpty(),
-    imagen: () => pad.toDataURL('image/png')
+    imagen: () => pad.toDataURL('image/png'),
+    // Quita los listeners del canvas. Debe llamarse antes de crear un pad
+    // nuevo sobre el mismo canvas (el elemento se reutiliza entre órdenes;
+    // sin esto, cada visita a una orden pendiente apilaría otro juego de
+    // listeners de puntero sobre #firma-tecnico/#firma-cliente).
+    destruir: () => pad.off()
   };
 }
 ```
@@ -961,6 +970,13 @@ async function renderOrden(id) {
       <dt>Cerrada</dt><dd>${formatearFecha(o.completed_at)}</dd>` : ''}
     </dl>`;
 
+  // #firma-tecnico/#firma-cliente son canvas fijos que se reutilizan entre
+  // órdenes; hay que soltar los listeners del pad anterior antes de crear
+  // uno nuevo (o de dejar de necesitarlo, si la orden ya está completada).
+  pads?.tecnico?.destruir();
+  pads?.cliente?.destruir();
+  pads = null;
+
   const esPendiente = o.estado === 'pendiente';
   $('#form-completar').classList.toggle('oculto', !esPendiente);
   $('#btn-pdf').classList.toggle('oculto', esPendiente);
@@ -1001,10 +1017,14 @@ $('#form-completar').addEventListener('submit', async (e) => {
   const v = validarCierre(cierre);
   if (!v.ok) return mostrarError('error-completar', v.errores);
   limpiarError('error-completar');
+  const boton = e.target.querySelector('button[type="submit"]');
+  boton.disabled = true;
   try {
     ordenActual = await datos.completarOrden(ordenActual.id, cierre);
   } catch {
     return mostrarError('error-completar', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  } finally {
+    boton.disabled = false;
   }
   navegar(`#/orden/${ordenActual.id}`);
 });
