@@ -18,6 +18,15 @@ function limpiarError(idParrafo) {
   document.getElementById(idParrafo).classList.add('oculto');
 }
 
+// Navega a `hash`. Si el hash ya es ese, `hashchange` no dispara solo,
+// así que forzamos rutear() para no perder la actualización. Si el hash
+// sí cambia, dejamos que el propio hashchange dispare rutear() una vez
+// (llamarlo aquí también duplicaría la ejecución).
+function navegar(hash) {
+  if (location.hash === hash) rutear();
+  else location.hash = hash;
+}
+
 async function rutear() {
   try {
     if (!(await datos.haySesion())) {
@@ -54,14 +63,12 @@ $('#form-login').addEventListener('submit', async (e) => {
   if (!r.ok) return mostrarError('error-login', r.error);
   $('#clave').value = '';
   limpiarError('error-login');
-  location.hash = '#/';
-  rutear();
+  navegar('#/');
 });
 
 $('#btn-salir').addEventListener('click', async () => {
   await datos.cerrarSesion();
-  location.hash = '#/';
-  rutear();
+  navegar('#/');
 });
 
 window.addEventListener('hashchange', rutear);
