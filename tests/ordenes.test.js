@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   TIPOS_SERVICIO, TIPOS_CLIENTE,
   validarNuevaOrden, limpiarMateriales, validarCierre,
-  ordenarParaLista, formatearFecha
+  ordenarParaLista, formatearFecha, etiquetasServicios
 } from '../js/ordenes.js';
 
 test('validarNuevaOrden acepta una orden completa', () => {
@@ -11,7 +11,7 @@ test('validarNuevaOrden acepta una orden completa', () => {
     cliente_nombre: 'Juan Pérez',
     cliente_direccion: 'Av. Siempre Viva 123',
     tipo_cliente: 'hogar',
-    tipo_servicio: 'camaras',
+    servicios: ['camaras'],
     tecnico: 'Carlos'
   });
   assert.equal(r.ok, true);
@@ -22,6 +22,27 @@ test('validarNuevaOrden junta un error por cada campo obligatorio faltante', () 
   const r = validarNuevaOrden({ cliente_nombre: '  ', tipo_cliente: 'oficina' });
   assert.equal(r.ok, false);
   assert.equal(r.errores.length, 5);
+});
+
+test('validarNuevaOrden exige al menos un servicio', () => {
+  const base = {
+    cliente_nombre: 'Juan Pérez',
+    cliente_direccion: 'Av. Siempre Viva 123',
+    tipo_cliente: 'hogar',
+    tecnico: 'Carlos'
+  };
+  const sinServicios = validarNuevaOrden({ ...base, servicios: [] });
+  assert.equal(sinServicios.ok, false);
+  assert.ok(sinServicios.errores.includes('Selecciona al menos un servicio'));
+
+  const conServicios = validarNuevaOrden({ ...base, servicios: ['audio', 'internet'] });
+  assert.equal(conServicios.ok, true);
+});
+
+test('etiquetasServicios traduce claves a etiquetas legibles', () => {
+  assert.deepEqual(etiquetasServicios(['camaras', 'internet']), ['Cámaras', 'Internet']);
+  assert.deepEqual(etiquetasServicios(undefined), []);
+  assert.deepEqual(etiquetasServicios(['camaras', 'desconocido']), ['Cámaras', 'desconocido']);
 });
 
 test('limpiarMateriales descarta filas vacías o inválidas y normaliza', () => {

@@ -12,12 +12,16 @@ export const TIPOS_CLIENTE = {
   empresa: 'Empresa'
 };
 
+export function etiquetasServicios(servicios) {
+  return (servicios || []).map(s => TIPOS_SERVICIO[s] || s);
+}
+
 export function validarNuevaOrden(d) {
   const errores = [];
   if (!d.cliente_nombre?.trim()) errores.push('El nombre del cliente es obligatorio');
   if (!d.cliente_direccion?.trim()) errores.push('La dirección es obligatoria');
   if (!TIPOS_CLIENTE[d.tipo_cliente]) errores.push('Elige hogar o empresa');
-  if (!TIPOS_SERVICIO[d.tipo_servicio]) errores.push('Elige el tipo de servicio');
+  if (!Array.isArray(d.servicios) || d.servicios.length === 0) errores.push('Selecciona al menos un servicio');
   if (!d.tecnico?.trim()) errores.push('Asigna un técnico');
   return { ok: errores.length === 0, errores };
 }
