@@ -1,4 +1,9 @@
 import * as datos from './datos.js';
+import {
+  TIPOS_SERVICIO, TIPOS_CLIENTE,
+  validarNuevaOrden, validarCierre, limpiarMateriales,
+  ordenarParaLista, formatearFecha
+} from './ordenes.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -52,9 +57,42 @@ async function rutear() {
   }
 }
 
-// Placeholders que las tareas 5 y 6 reemplazan por renders reales:
-async function renderLista() { mostrarVista('vista-lista'); }
-async function renderNueva() { mostrarVista('vista-nueva'); }
+function escapar(texto) {
+  const d = document.createElement('div');
+  d.textContent = texto ?? '';
+  return d.innerHTML;
+}
+
+function tarjetaOrden(o) {
+  return `<a class="tarjeta" href="#/orden/${o.id}">
+    <strong>${o.folio}</strong> · ${escapar(o.cliente_nombre)}
+    <span>${TIPOS_SERVICIO[o.tipo_servicio] || ''} — ${escapar(o.tecnico)}</span>
+  </a>`;
+}
+
+async function renderLista() {
+  mostrarVista('vista-lista');
+  const hashEsperado = location.hash || '#/';
+  const ordenes = await datos.listarOrdenes();
+  // Si el usuario ya navegó a otra vista mientras esto cargaba, no pisar su pantalla actual.
+  if ((location.hash || '#/') !== hashEsperado) return;
+  const { pendientes, completadas } = ordenarParaLista(ordenes);
+  $('#lista-pendientes').innerHTML =
+    pendientes.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pendientes</p>';
+  $('#lista-completadas').innerHTML =
+    completadas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes completadas</p>';
+}
+
+async function renderNueva() {
+  mostrarVista('vista-nueva');
+  const hashEsperado = location.hash;
+  const tecnicos = await datos.listarTecnicos();
+  if (location.hash !== hashEsperado) return;
+  $('#select-tecnico').innerHTML =
+    tecnicos.map(t => `<option>${escapar(t)}</option>`).join('');
+}
+
+// Placeholder que la tarea 6 reemplaza por render real:
 async function renderOrden(id) { mostrarVista('vista-orden'); }
 
 $('#form-login').addEventListener('submit', async (e) => {
@@ -68,6 +106,21 @@ $('#form-login').addEventListener('submit', async (e) => {
 
 $('#btn-salir').addEventListener('click', async () => {
   await datos.cerrarSesion();
+  navegar('#/');
+});
+
+$('#form-nueva').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(e.target));
+  const v = validarNuevaOrden(d);
+  if (!v.ok) return mostrarError('error-nueva', v.errores);
+  limpiarError('error-nueva');
+  try {
+    await datos.crearOrden(d);
+  } catch {
+    return mostrarError('error-nueva', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  }
+  e.target.reset();
   navegar('#/');
 });
 
