@@ -4,8 +4,23 @@ import {
   validarNuevaOrden, validarCierre, limpiarMateriales,
   ordenarParaLista, formatearFecha
 } from './ordenes.js';
+import { crearPad } from './firma.js';
 
 const $ = (sel) => document.querySelector(sel);
+
+let ordenActual = null;
+let pads = null;
+
+function filaMaterial() {
+  const div = document.createElement('div');
+  div.className = 'fila-material';
+  div.innerHTML = `
+    <input type="number" min="1" class="cantidad" placeholder="Cant.">
+    <input type="text" class="descripcion" placeholder="Descripción / modelo">
+    <button type="button" class="quitar" aria-label="Quitar fila">×</button>`;
+  div.querySelector('.quitar').addEventListener('click', () => div.remove());
+  return div;
+}
 
 const VISTAS = ['vista-login', 'vista-lista', 'vista-nueva', 'vista-orden'];
 
@@ -92,8 +107,54 @@ async function renderNueva() {
     tecnicos.map(t => `<option>${escapar(t)}</option>`).join('');
 }
 
-// Placeholder que la tarea 6 reemplaza por render real:
-async function renderOrden(id) { mostrarVista('vista-orden'); }
+async function renderOrden(id) {
+  mostrarVista('vista-orden');
+  const hashEsperado = location.hash;
+  const orden = await datos.obtenerOrden(id);
+  // Si el usuario ya abrió otra orden mientras esta cargaba, no pisar sus datos
+  // ni crear un segundo SignaturePad sobre los mismos canvas.
+  if (location.hash !== hashEsperado) return;
+  ordenActual = orden;
+  if (!ordenActual) { location.hash = '#/'; return; }
+  const o = ordenActual;
+
+  $('#orden-datos').innerHTML = `
+    <h2>${o.folio} <span class="estado ${o.estado}">${o.estado}</span></h2>
+    <dl>
+      <dt>Cliente</dt><dd>${escapar(o.cliente_nombre)} (${TIPOS_CLIENTE[o.tipo_cliente] || ''})</dd>
+      <dt>Teléfono</dt><dd>${escapar(o.cliente_telefono || '—')}</dd>
+      <dt>Dirección</dt><dd>${escapar(o.cliente_direccion)}</dd>
+      <dt>Servicio</dt><dd>${TIPOS_SERVICIO[o.tipo_servicio] || ''}</dd>
+      <dt>Solicitado</dt><dd>${escapar(o.descripcion || '—')}</dd>
+      <dt>Técnico</dt><dd>${escapar(o.tecnico)}</dd>
+      <dt>Creada</dt><dd>${formatearFecha(o.created_at)}</dd>
+      ${o.estado === 'completada' ? `
+      <dt>Trabajo realizado</dt><dd>${escapar(o.trabajo_realizado)}</dd>
+      <dt>Materiales</dt><dd>${(o.materiales || [])
+        .map(m => `${m.cantidad} × ${escapar(m.descripcion)}`).join('<br>') || '—'}</dd>
+      <dt>Cerrada</dt><dd>${formatearFecha(o.completed_at)}</dd>` : ''}
+    </dl>`;
+
+  // #firma-tecnico/#firma-cliente son canvas fijos que se reutilizan entre
+  // órdenes; hay que soltar los listeners del pad anterior antes de crear
+  // uno nuevo (o de dejar de necesitarlo, si la orden ya está completada).
+  pads?.tecnico?.destruir();
+  pads?.cliente?.destruir();
+  pads = null;
+
+  const esPendiente = o.estado === 'pendiente';
+  $('#form-completar').classList.toggle('oculto', !esPendiente);
+  $('#btn-pdf').classList.toggle('oculto', esPendiente);
+
+  if (esPendiente) {
+    $('#trabajo-realizado').value = '';
+    $('#filas-materiales').replaceChildren(filaMaterial());
+    pads = {
+      tecnico: crearPad(document.getElementById('firma-tecnico')),
+      cliente: crearPad(document.getElementById('firma-cliente'))
+    };
+  }
+}
 
 $('#form-login').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -126,6 +187,40 @@ $('#form-nueva').addEventListener('submit', async (e) => {
   }
   e.target.reset();
   navegar('#/');
+});
+
+$('#btn-agregar-material').addEventListener('click', () => {
+  $('#filas-materiales').appendChild(filaMaterial());
+});
+
+document.querySelectorAll('[data-limpia]').forEach(b =>
+  b.addEventListener('click', () => pads?.[b.dataset.limpia]?.limpiar()));
+
+$('#form-completar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const filas = [...document.querySelectorAll('#filas-materiales .fila-material')].map(f => ({
+    cantidad: f.querySelector('.cantidad').value,
+    descripcion: f.querySelector('.descripcion').value
+  }));
+  const cierre = {
+    trabajo_realizado: $('#trabajo-realizado').value,
+    materiales: limpiarMateriales(filas),
+    firma_tecnico: pads.tecnico.vacia() ? null : pads.tecnico.imagen(),
+    firma_cliente: pads.cliente.vacia() ? null : pads.cliente.imagen()
+  };
+  const v = validarCierre(cierre);
+  if (!v.ok) return mostrarError('error-completar', v.errores);
+  limpiarError('error-completar');
+  const boton = e.target.querySelector('button[type="submit"]');
+  boton.disabled = true;
+  try {
+    ordenActual = await datos.completarOrden(ordenActual.id, cierre);
+  } catch {
+    return mostrarError('error-completar', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  } finally {
+    boton.disabled = false;
+  }
+  navegar(`#/orden/${ordenActual.id}`);
 });
 
 window.addEventListener('hashchange', rutear);
