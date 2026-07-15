@@ -894,7 +894,9 @@ export function crearPad(canvas) {
   const pad = new window.SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)' });
 
   function redimensionar() {
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    // Tope en 2x: suficiente nitidez para el PDF: más resolución solo
+    // engorda el PNG de la firma sin mejorarla al ojo.
+    const ratio = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
     const trazos = pad.toData();
     canvas.width = canvas.offsetWidth * ratio;
     canvas.height = canvas.offsetHeight * ratio;
@@ -1128,11 +1130,18 @@ function bloqueTexto(doc, titulo, texto, y, margen, ancho) {
 
 export function generarPdf(orden) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'letter' }); // carta: 216 x 279 mm
+  // compress: true reduce el peso final ~99% (las firmas son la parte más
+  // pesada) — clave para compartir por WhatsApp con datos móviles en sitio.
+  const doc = new jsPDF({ unit: 'mm', format: 'letter', compress: true }); // carta: 216 x 279 mm
   const MARGEN = 16;
   const DERECHA = 216 - MARGEN;
   const ANCHO = DERECHA - MARGEN;
+  const ABAJO = 270; // deja margen inferior antes del borde de 279mm
   let y = 20;
+
+  function saltarPaginaSiNecesario() {
+    if (y > ABAJO) { doc.addPage(); y = 30; }
+  }
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
@@ -1149,6 +1158,7 @@ export function generarPdf(orden) {
 
   doc.setFontSize(11);
   for (const [etiqueta, valor] of seccionesPdf(orden)) {
+    saltarPaginaSiNecesario();
     doc.setFont('helvetica', 'bold');
     doc.text(etiqueta + ':', MARGEN, y);
     doc.setFont('helvetica', 'normal');
@@ -1157,9 +1167,12 @@ export function generarPdf(orden) {
   }
   y += 3;
 
+  saltarPaginaSiNecesario();
   y = bloqueTexto(doc, 'Descripción solicitada', orden.descripcion, y, MARGEN, ANCHO);
+  saltarPaginaSiNecesario();
   y = bloqueTexto(doc, 'Trabajo realizado', orden.trabajo_realizado, y, MARGEN, ANCHO);
 
+  saltarPaginaSiNecesario();
   doc.setFont('helvetica', 'bold');
   doc.text('Materiales y equipos', MARGEN, y);
   y += 6;
@@ -1170,6 +1183,7 @@ export function generarPdf(orden) {
     y += 6;
   }
   for (const m of materiales) {
+    saltarPaginaSiNecesario();
     doc.text(`${m.cantidad} × ${m.descripcion}`, MARGEN, y);
     y += 6;
   }
@@ -1203,8 +1217,9 @@ export async function compartirPdf(orden) {
     try {
       await navigator.share({ files: [archivo], title: nombre });
       return;
-    } catch {
-      // usuario canceló el diálogo de compartir: no es error
+    } catch (err) {
+      if (err.name === 'AbortError') return; // usuario canceló el diálogo de compartir
+      console.error(err);
       return;
     }
   }
@@ -1232,10 +1247,16 @@ $('#btn-pdf').addEventListener('click', () => compartirPdf(ordenActual));
 ```
 
 Y en el submit de `#form-completar`, después de `completarOrden` y antes de
-cambiar el hash, ofrecer el PDF de inmediato:
+cambiar el hash, ofrecer el PDF de inmediato. La orden ya quedó guardada en
+`completarOrden`, así que un fallo aquí (p. ej. sin memoria para armar el PDF)
+no debe dejar al técnico varado en el formulario sin poder continuar:
 
 ```js
-  await compartirPdf(ordenActual);
+  try {
+    await compartirPdf(ordenActual);
+  } catch (err) {
+    console.error(err);
+  }
 ```
 
 - [ ] **Step 6: Verificar en navegador**
