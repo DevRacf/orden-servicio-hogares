@@ -65,7 +65,7 @@ function escapar(texto) {
 
 function tarjetaOrden(o) {
   return `<a class="tarjeta" href="#/orden/${o.id}">
-    <strong>${o.folio}</strong> · ${escapar(o.cliente_nombre)}
+    <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}
     <span>${TIPOS_SERVICIO[o.tipo_servicio] || ''} — ${escapar(o.tecnico)}</span>
   </a>`;
 }
@@ -115,10 +115,14 @@ $('#form-nueva').addEventListener('submit', async (e) => {
   const v = validarNuevaOrden(d);
   if (!v.ok) return mostrarError('error-nueva', v.errores);
   limpiarError('error-nueva');
+  const boton = e.target.querySelector('button[type="submit"]');
+  boton.disabled = true;
   try {
     await datos.crearOrden(d);
   } catch {
     return mostrarError('error-nueva', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  } finally {
+    boton.disabled = false;
   }
   e.target.reset();
   navegar('#/');
