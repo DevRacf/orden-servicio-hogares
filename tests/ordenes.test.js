@@ -35,6 +35,10 @@ test('validarNuevaOrden exige al menos un servicio', () => {
   assert.equal(sinServicios.ok, false);
   assert.ok(sinServicios.errores.includes('Selecciona al menos un servicio'));
 
+  const servicioInvalido = validarNuevaOrden({ ...base, servicios: ['camaras', 'desconocido'] });
+  assert.equal(servicioInvalido.ok, false);
+  assert.ok(servicioInvalido.errores.includes('Selecciona al menos un servicio'));
+
   const conServicios = validarNuevaOrden({ ...base, servicios: ['audio', 'internet'] });
   assert.equal(conServicios.ok, true);
 });

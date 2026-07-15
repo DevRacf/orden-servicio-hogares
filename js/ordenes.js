@@ -21,7 +21,7 @@ export function validarNuevaOrden(d) {
   if (!d.cliente_nombre?.trim()) errores.push('El nombre del cliente es obligatorio');
   if (!d.cliente_direccion?.trim()) errores.push('La dirección es obligatoria');
   if (!TIPOS_CLIENTE[d.tipo_cliente]) errores.push('Elige hogar o empresa');
-  if (!Array.isArray(d.servicios) || d.servicios.length === 0) errores.push('Selecciona al menos un servicio');
+  if (!Array.isArray(d.servicios) || d.servicios.length === 0 || !d.servicios.every(s => TIPOS_SERVICIO[s])) errores.push('Selecciona al menos un servicio');
   if (!d.tecnico?.trim()) errores.push('Asigna un técnico');
   return { ok: errores.length === 0, errores };
 }
