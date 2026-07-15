@@ -6,7 +6,7 @@ export function seccionesPdf(orden) {
     ['Teléfono', orden.cliente_telefono || '—'],
     ['Dirección', orden.cliente_direccion],
     ['Tipo de cliente', TIPOS_CLIENTE[orden.tipo_cliente] || orden.tipo_cliente],
-    ['Servicios', etiquetasServicios(orden.servicios).join(', ')],
+    ['Servicios', etiquetasServicios(orden.servicios).join(', ') || '—'],
     ['Técnico', orden.tecnico],
     ['Fecha de creación', formatearFecha(orden.created_at)],
     ['Fecha de cierre', formatearFecha(orden.completed_at)]

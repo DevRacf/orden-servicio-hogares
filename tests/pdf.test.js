@@ -33,3 +33,8 @@ test('seccionesPdf junta un solo servicio sin coma de sobra', () => {
   const mapa = Object.fromEntries(seccionesPdf({ ...orden, servicios: ['pantallas'] }));
   assert.equal(mapa['Servicios'], 'Pantallas');
 });
+
+test('seccionesPdf usa guion si no hay servicios', () => {
+  const mapa = Object.fromEntries(seccionesPdf({ ...orden, servicios: [] }));
+  assert.equal(mapa['Servicios'], '—');
+});
