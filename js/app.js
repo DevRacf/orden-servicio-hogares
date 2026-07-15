@@ -5,6 +5,7 @@ import {
   ordenarParaLista, formatearFecha
 } from './ordenes.js';
 import { crearPad } from './firma.js';
+import { compartirPdf } from './pdf.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -196,6 +197,8 @@ $('#btn-agregar-material').addEventListener('click', () => {
 document.querySelectorAll('[data-limpia]').forEach(b =>
   b.addEventListener('click', () => pads?.[b.dataset.limpia]?.limpiar()));
 
+$('#btn-pdf').addEventListener('click', () => compartirPdf(ordenActual));
+
 $('#form-completar').addEventListener('submit', async (e) => {
   e.preventDefault();
   const filas = [...document.querySelectorAll('#filas-materiales .fila-material')].map(f => ({
@@ -220,6 +223,7 @@ $('#form-completar').addEventListener('submit', async (e) => {
   } finally {
     boton.disabled = false;
   }
+  await compartirPdf(ordenActual);
   navegar(`#/orden/${ordenActual.id}`);
 });
 
