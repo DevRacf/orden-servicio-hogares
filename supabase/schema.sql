@@ -18,8 +18,13 @@ create table if not exists ordenes (
   cliente_telefono text,
   cliente_direccion text not null,
   tipo_cliente text not null check (tipo_cliente in ('hogar', 'empresa')),
-  tipo_servicio text not null check (tipo_servicio in
-    ('camaras', 'audio', 'internet', 'pantallas', 'mantenimiento', 'otro')),
+  -- coalesce(...,0) es necesario porque array_length() regresa NULL (no 0)
+  -- para un arreglo vacío, y un check que da NULL se considera válido en
+  -- Postgres — sin el coalesce, un arreglo vacío pasaría el check.
+  servicios text[] not null check (
+    coalesce(array_length(servicios, 1), 0) > 0 and
+    servicios <@ array['camaras','audio','internet','pantallas','mantenimiento','otro']::text[]
+  ),
   descripcion text,
   tecnico text not null,
   trabajo_realizado text,
