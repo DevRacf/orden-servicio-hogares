@@ -954,7 +954,7 @@ async function renderOrden(id) {
   const o = ordenActual;
 
   $('#orden-datos').innerHTML = `
-    <h2>${o.folio} <span class="estado ${o.estado}">${o.estado}</span></h2>
+    <h2>${escapar(o.folio)} <span class="estado ${o.estado}">${o.estado}</span></h2>
     <dl>
       <dt>Cliente</dt><dd>${escapar(o.cliente_nombre)} (${TIPOS_CLIENTE[o.tipo_cliente] || ''})</dd>
       <dt>Teléfono</dt><dd>${escapar(o.cliente_telefono || '—')}</dd>
