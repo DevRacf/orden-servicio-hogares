@@ -709,6 +709,15 @@ function limpiarError(idParrafo) {
   document.getElementById(idParrafo).classList.add('oculto');
 }
 
+// Navega a `hash`. Si el hash ya es ese, `hashchange` no dispara solo,
+// así que forzamos rutear() para no perder la actualización. Si el hash
+// sí cambia, dejamos que el propio hashchange dispare rutear() una vez
+// (llamarlo aquí también duplicaría la ejecución).
+function navegar(hash) {
+  if (location.hash === hash) rutear();
+  else location.hash = hash;
+}
+
 async function rutear() {
   try {
     if (!(await datos.haySesion())) {
@@ -745,14 +754,12 @@ $('#form-login').addEventListener('submit', async (e) => {
   if (!r.ok) return mostrarError('error-login', r.error);
   $('#clave').value = '';
   limpiarError('error-login');
-  location.hash = '#/';
-  rutear();
+  navegar('#/');
 });
 
 $('#btn-salir').addEventListener('click', async () => {
   await datos.cerrarSesion();
-  location.hash = '#/';
-  rutear();
+  navegar('#/');
 });
 
 window.addEventListener('hashchange', rutear);
@@ -810,7 +817,11 @@ function tarjetaOrden(o) {
 
 async function renderLista() {
   mostrarVista('vista-lista');
-  const { pendientes, completadas } = ordenarParaLista(await datos.listarOrdenes());
+  const hashEsperado = location.hash || '#/';
+  const ordenes = await datos.listarOrdenes();
+  // Si el usuario ya navegó a otra vista mientras esto cargaba, no pisar su pantalla actual.
+  if ((location.hash || '#/') !== hashEsperado) return;
+  const { pendientes, completadas } = ordenarParaLista(ordenes);
   $('#lista-pendientes').innerHTML =
     pendientes.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pendientes</p>';
   $('#lista-completadas').innerHTML =
@@ -819,7 +830,9 @@ async function renderLista() {
 
 async function renderNueva() {
   mostrarVista('vista-nueva');
+  const hashEsperado = location.hash;
   const tecnicos = await datos.listarTecnicos();
+  if (location.hash !== hashEsperado) return;
   $('#select-tecnico').innerHTML =
     tecnicos.map(t => `<option>${escapar(t)}</option>`).join('');
 }
@@ -840,7 +853,7 @@ $('#form-nueva').addEventListener('submit', async (e) => {
     return mostrarError('error-nueva', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
   }
   e.target.reset();
-  location.hash = '#/';
+  navegar('#/');
 });
 ```
 
@@ -922,7 +935,12 @@ function filaMaterial() {
 ```js
 async function renderOrden(id) {
   mostrarVista('vista-orden');
-  ordenActual = await datos.obtenerOrden(id);
+  const hashEsperado = location.hash;
+  const orden = await datos.obtenerOrden(id);
+  // Si el usuario ya abrió otra orden mientras esta cargaba, no pisar sus datos
+  // ni crear un segundo SignaturePad sobre los mismos canvas.
+  if (location.hash !== hashEsperado) return;
+  ordenActual = orden;
   if (!ordenActual) { location.hash = '#/'; return; }
   const o = ordenActual;
 
@@ -988,8 +1006,7 @@ $('#form-completar').addEventListener('submit', async (e) => {
   } catch {
     return mostrarError('error-completar', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
   }
-  location.hash = `#/orden/${ordenActual.id}`;
-  rutear();
+  navegar(`#/orden/${ordenActual.id}`);
 });
 ```
 
