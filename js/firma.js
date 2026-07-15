@@ -4,7 +4,9 @@ export function crearPad(canvas) {
   const pad = new window.SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)' });
 
   function redimensionar() {
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    // Tope en 2x: suficiente nitidez para el PDF: más resolución solo
+    // engorda el PNG de la firma sin mejorarla al ojo.
+    const ratio = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
     const trazos = pad.toData();
     canvas.width = canvas.offsetWidth * ratio;
     canvas.height = canvas.offsetHeight * ratio;

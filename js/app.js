@@ -223,7 +223,11 @@ $('#form-completar').addEventListener('submit', async (e) => {
   } finally {
     boton.disabled = false;
   }
-  await compartirPdf(ordenActual);
+  try {
+    await compartirPdf(ordenActual);
+  } catch (err) {
+    console.error(err);
+  }
   navegar(`#/orden/${ordenActual.id}`);
 });
 

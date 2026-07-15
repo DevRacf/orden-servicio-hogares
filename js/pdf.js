@@ -25,11 +25,18 @@ function bloqueTexto(doc, titulo, texto, y, margen, ancho) {
 
 export function generarPdf(orden) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'letter' }); // carta: 216 x 279 mm
+  // compress: true reduce el peso final ~99% (las firmas son la parte más
+  // pesada) — clave para compartir por WhatsApp con datos móviles en sitio.
+  const doc = new jsPDF({ unit: 'mm', format: 'letter', compress: true }); // carta: 216 x 279 mm
   const MARGEN = 16;
   const DERECHA = 216 - MARGEN;
   const ANCHO = DERECHA - MARGEN;
+  const ABAJO = 270; // deja margen inferior antes del borde de 279mm
   let y = 20;
+
+  function saltarPaginaSiNecesario() {
+    if (y > ABAJO) { doc.addPage(); y = 30; }
+  }
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
@@ -46,6 +53,7 @@ export function generarPdf(orden) {
 
   doc.setFontSize(11);
   for (const [etiqueta, valor] of seccionesPdf(orden)) {
+    saltarPaginaSiNecesario();
     doc.setFont('helvetica', 'bold');
     doc.text(etiqueta + ':', MARGEN, y);
     doc.setFont('helvetica', 'normal');
@@ -54,9 +62,12 @@ export function generarPdf(orden) {
   }
   y += 3;
 
+  saltarPaginaSiNecesario();
   y = bloqueTexto(doc, 'Descripción solicitada', orden.descripcion, y, MARGEN, ANCHO);
+  saltarPaginaSiNecesario();
   y = bloqueTexto(doc, 'Trabajo realizado', orden.trabajo_realizado, y, MARGEN, ANCHO);
 
+  saltarPaginaSiNecesario();
   doc.setFont('helvetica', 'bold');
   doc.text('Materiales y equipos', MARGEN, y);
   y += 6;
@@ -67,6 +78,7 @@ export function generarPdf(orden) {
     y += 6;
   }
   for (const m of materiales) {
+    saltarPaginaSiNecesario();
     doc.text(`${m.cantidad} × ${m.descripcion}`, MARGEN, y);
     y += 6;
   }
@@ -100,8 +112,9 @@ export async function compartirPdf(orden) {
     try {
       await navigator.share({ files: [archivo], title: nombre });
       return;
-    } catch {
-      // usuario canceló el diálogo de compartir: no es error
+    } catch (err) {
+      if (err.name === 'AbortError') return; // usuario canceló el diálogo de compartir
+      console.error(err);
       return;
     }
   }
