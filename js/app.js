@@ -1,8 +1,8 @@
 import * as datos from './datos.js';
 import {
-  TIPOS_SERVICIO, TIPOS_CLIENTE,
+  TIPOS_CLIENTE,
   validarNuevaOrden, validarCierre, limpiarMateriales,
-  ordenarParaLista, formatearFecha
+  ordenarParaLista, formatearFecha, etiquetasServicios
 } from './ordenes.js';
 import { crearPad } from './firma.js';
 import { compartirPdf } from './pdf.js';
@@ -80,9 +80,11 @@ function escapar(texto) {
 }
 
 function tarjetaOrden(o) {
+  const etiquetas = etiquetasServicios(o.servicios).map(e => `<span class="etiqueta">${escapar(e)}</span>`).join('');
   return `<a class="tarjeta" href="#/orden/${o.id}">
     <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}
-    <span>${TIPOS_SERVICIO[o.tipo_servicio] || ''} — ${escapar(o.tecnico)}</span>
+    <div class="etiquetas-servicio">${etiquetas}</div>
+    <span>${escapar(o.tecnico)}</span>
   </a>`;
 }
 
@@ -125,7 +127,7 @@ async function renderOrden(id) {
       <dt>Cliente</dt><dd>${escapar(o.cliente_nombre)} (${TIPOS_CLIENTE[o.tipo_cliente] || ''})</dd>
       <dt>Teléfono</dt><dd>${escapar(o.cliente_telefono || '—')}</dd>
       <dt>Dirección</dt><dd>${escapar(o.cliente_direccion)}</dd>
-      <dt>Servicio</dt><dd>${TIPOS_SERVICIO[o.tipo_servicio] || ''}</dd>
+      <dt>Servicios</dt><dd>${etiquetasServicios(o.servicios).map(e => escapar(e)).join(', ')}</dd>
       <dt>Solicitado</dt><dd>${escapar(o.descripcion || '—')}</dd>
       <dt>Técnico</dt><dd>${escapar(o.tecnico)}</dd>
       <dt>Creada</dt><dd>${formatearFecha(o.created_at)}</dd>
@@ -173,7 +175,9 @@ $('#btn-salir').addEventListener('click', async () => {
 
 $('#form-nueva').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const d = Object.fromEntries(new FormData(e.target));
+  const form = new FormData(e.target);
+  const d = Object.fromEntries(form);
+  d.servicios = form.getAll('servicios');
   const v = validarNuevaOrden(d);
   if (!v.ok) return mostrarError('error-nueva', v.errores);
   limpiarError('error-nueva');

@@ -53,16 +53,35 @@
             <option value="empresa">Empresa</option>
           </select>
         </label>
-        <label>Tipo de servicio
-          <select name="tipo_servicio">
-            <option value="camaras">Cámaras</option>
-            <option value="audio">Audio</option>
-            <option value="internet">Internet</option>
-            <option value="pantallas">Pantallas</option>
-            <option value="mantenimiento">Mantenimiento</option>
-            <option value="otro">Otro</option>
-          </select>
-        </label>
+        <fieldset class="servicios-campo">
+          <legend>Servicios solicitados</legend>
+          <div class="chips">
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="camaras">
+              <span>Cámaras</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="audio">
+              <span>Audio</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="internet">
+              <span>Internet</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="pantallas">
+              <span>Pantallas</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="mantenimiento">
+              <span>Mantenimiento</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="otro">
+              <span>Otro</span>
+            </label>
+          </div>
+        </fieldset>
         <label>Descripción de lo solicitado
           <textarea name="descripcion" rows="3"></textarea>
         </label>
