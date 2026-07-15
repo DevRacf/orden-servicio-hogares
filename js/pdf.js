@@ -1,4 +1,4 @@
-import { TIPOS_SERVICIO, TIPOS_CLIENTE, formatearFecha } from './ordenes.js';
+import { TIPOS_CLIENTE, formatearFecha, etiquetasServicios } from './ordenes.js';
 
 export function seccionesPdf(orden) {
   return [
@@ -6,7 +6,7 @@ export function seccionesPdf(orden) {
     ['Teléfono', orden.cliente_telefono || '—'],
     ['Dirección', orden.cliente_direccion],
     ['Tipo de cliente', TIPOS_CLIENTE[orden.tipo_cliente] || orden.tipo_cliente],
-    ['Servicio', TIPOS_SERVICIO[orden.tipo_servicio] || orden.tipo_servicio],
+    ['Servicios', etiquetasServicios(orden.servicios).join(', ')],
     ['Técnico', orden.tecnico],
     ['Fecha de creación', formatearFecha(orden.created_at)],
     ['Fecha de cierre', formatearFecha(orden.completed_at)]
