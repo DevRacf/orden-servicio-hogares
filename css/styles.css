@@ -1,19 +1,22 @@
 :root {
-  --azul: #0f3057;
-  --azul-claro: #00587a;
-  --acento: #008891;
-  --fondo: #f4f7f9;
-  --texto: #1c2b36;
+  --azul: #0B2545;
+  --acento: #D97706;
+  --fondo: #F4F6F5;
+  --texto: #0B2545;
   --gris: #5c6b78;
   --rojo: #c0392b;
   --blanco: #ffffff;
+  --pendiente-fondo: #FEF3C7;
+  --pendiente-texto: #92400E;
+  --completada-fondo: #D7F5E3;
+  --completada-texto: #14683C;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--fondo);
   color: var(--texto);
 }
@@ -24,124 +27,167 @@ body {
   align-items: center;
   background: var(--azul);
   color: var(--blanco);
-  padding: 0.8rem 1rem;
+  padding: 0.9rem 1rem;
 }
 
-.marca { font-size: 1.05rem; margin: 0; font-weight: 700; letter-spacing: 0.02em; }
+.marca {
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
 
 main { max-width: 640px; margin: 0 auto; padding: 1rem; }
 
 .oculto { display: none !important; }
 
-h2 { font-size: 1.15rem; margin: 1.2rem 0 0.6rem; }
-h3 { font-size: 1rem; margin: 1.2rem 0 0.4rem; }
+h2, h3 { font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif; font-weight: 700; }
+h2 { font-size: 1.2rem; margin: 1.2rem 0 0.6rem; }
+h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
 
-form label { display: block; margin-bottom: 0.8rem; font-weight: 600; font-size: 0.9rem; }
+form label { display: block; margin-bottom: 0.9rem; font-weight: 600; font-size: 0.92rem; }
 
 input, textarea, select {
   display: block;
   width: 100%;
-  margin-top: 0.3rem;
-  padding: 0.6rem;
+  margin-top: 0.35rem;
+  padding: 0.75rem;
   font: inherit;
   font-weight: 400;
-  border: 1px solid #c8d3dc;
-  border-radius: 8px;
+  border: 2px solid var(--azul);
+  border-radius: 10px;
   background: var(--blanco);
+  color: var(--texto);
 }
 
 button, .boton {
   display: inline-block;
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.9rem 1rem;
   margin-top: 0.5rem;
-  font: inherit;
-  font-weight: 600;
-  color: var(--blanco);
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 800;
+  font-size: 0.98rem;
+  color: var(--azul);
   background: var(--acento);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  min-height: 48px;
 }
 
 button.liga {
   width: auto;
+  min-height: auto;
   background: none;
-  color: var(--azul-claro);
+  color: var(--azul);
   padding: 0.6rem 0;
-  font-weight: 600;
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 700;
 }
 
-.encabezado .liga { color: var(--blanco); }
+.encabezado .liga { color: var(--acento); }
 
-.volver { display: inline-block; margin-bottom: 0.5rem; color: var(--azul-claro); text-decoration: none; font-weight: 600; }
+.volver {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: var(--azul);
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-decoration: none;
+  font-weight: 700;
+}
 
-.error { color: var(--rojo); font-size: 0.9rem; }
+.error { color: var(--rojo); font-size: 0.9rem; font-weight: 600; }
 .vacio { color: var(--gris); font-size: 0.9rem; }
 
 .tarjeta {
   display: block;
   background: var(--blanco);
-  border: 1px solid #dfe7ed;
-  border-radius: 10px;
-  padding: 0.8rem;
-  margin-bottom: 0.6rem;
+  border: 2px solid var(--azul);
+  border-radius: 12px;
+  padding: 0.9rem;
+  margin-bottom: 0.7rem;
   color: inherit;
   text-decoration: none;
 }
-.tarjeta span { display: block; color: var(--gris); font-size: 0.85rem; margin-top: 0.2rem; }
+.tarjeta strong { font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif; }
+.tarjeta > span { display: block; color: var(--gris); font-size: 0.85rem; margin-top: 0.3rem; }
 
-.estado { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 99px; vertical-align: middle; }
-.estado.pendiente { background: #fff3cd; color: #7a5c00; }
-.estado.completada { background: #d7f5e3; color: #14683c; }
+.estado {
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  vertical-align: middle;
+}
+.estado.pendiente { background: var(--pendiente-fondo); color: var(--pendiente-texto); }
+.estado.completada { background: var(--completada-fondo); color: var(--completada-texto); }
 
-dl { background: var(--blanco); border: 1px solid #dfe7ed; border-radius: 10px; padding: 0.8rem; margin: 0; }
-dt { font-size: 0.78rem; color: var(--gris); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.6rem; }
-dt:first-child { margin-top: 0; }
-dd { margin: 0.1rem 0 0; }
-
-.fila-material { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
-.fila-material .cantidad { width: 5rem; flex: none; }
-.fila-material .quitar { width: 2.6rem; flex: none; margin-top: 0.3rem; background: #e5ecf1; color: var(--texto); }
-
-canvas.firma {
-  width: 100%;
-  height: 160px;
-  background: var(--blanco);
-  border: 1px dashed #9fb2c0;
-  border-radius: 8px;
-  touch-action: none;
+.etiquetas-servicio { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; }
+.etiquetas-servicio .etiqueta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.55rem;
+  border-radius: 6px;
+  background: var(--fondo);
+  color: var(--azul);
+  border: 1px solid var(--azul);
 }
 
-fieldset.servicios-campo { border: none; padding: 0; margin: 0 0 0.8rem; }
-fieldset.servicios-campo legend { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.4rem; padding: 0; }
+dl { background: var(--blanco); border: 2px solid var(--azul); border-radius: 12px; padding: 0.9rem; margin: 0; }
+dt {
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.78rem;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 0.7rem;
+  font-weight: 700;
+}
+dt:first-child { margin-top: 0; }
+dd { margin: 0.15rem 0 0; }
+
+fieldset.servicios-campo { border: none; padding: 0; margin: 0 0 0.9rem; }
+fieldset.servicios-campo legend { font-weight: 600; font-size: 0.92rem; margin-bottom: 0.4rem; padding: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .chip {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid #c8d3dc;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--texto);
+  gap: 0.45rem;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid var(--azul);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--azul);
   background: var(--blanco);
   cursor: pointer;
   min-height: 44px;
 }
 .chip input[type="checkbox"] { all: revert; width: 1.1rem; height: 1.1rem; margin: 0; cursor: pointer; }
-.chip:has(input:checked) { background: var(--acento); border-color: var(--acento); color: var(--blanco); }
+.chip:has(input:checked) { background: var(--acento); border-color: var(--acento); color: var(--azul); }
 
-.etiquetas-servicio { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
-.etiquetas-servicio .etiqueta {
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 0.15rem 0.5rem;
-  border-radius: 6px;
+.fila-material { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
+.fila-material .cantidad { width: 5rem; flex: none; }
+.fila-material .quitar {
+  width: 2.8rem;
+  flex: none;
+  margin-top: 0.35rem;
+  min-height: auto;
   background: var(--fondo);
-  color: var(--gris);
-  border: 1px solid #dfe7ed;
+  border: 2px solid var(--azul);
+  color: var(--azul);
+}
+
+canvas.firma {
+  width: 100%;
+  height: 160px;
+  background: var(--blanco);
+  border: 2px dashed var(--azul);
+  border-radius: 10px;
+  touch-action: none;
 }
