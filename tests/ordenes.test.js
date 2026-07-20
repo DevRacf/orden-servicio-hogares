@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   TIPOS_SERVICIO, TIPOS_CLIENTE,
   validarNuevaOrden, limpiarMateriales, validarCierre,
-  ordenarParaLista, formatearFecha, etiquetasServicios
+  ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes
 } from '../js/ordenes.js';
 
 test('validarNuevaOrden acepta una orden completa', () => {
@@ -94,4 +94,18 @@ test('las etiquetas cubren todos los valores del esquema', () => {
   assert.deepEqual(Object.keys(TIPOS_SERVICIO),
     ['camaras', 'audio', 'internet', 'pantallas', 'mantenimiento', 'otro']);
   assert.deepEqual(Object.keys(TIPOS_CLIENTE), ['hogar', 'empresa']);
+});
+
+test('filtrarOrdenes busca por cliente o folio, sin acentos ni mayúsculas', () => {
+  const ordenes = [
+    { id: 'a', folio: 'OS-0001', cliente_nombre: 'Familia Gómez Herrera' },
+    { id: 'b', folio: 'OS-0002', cliente_nombre: 'Ferretería El Martillo' },
+    { id: 'c', folio: 'OS-0003', cliente_nombre: 'Consultorio Dental Sonrisa' }
+  ];
+  assert.deepEqual(filtrarOrdenes(ordenes, 'gomez').map(o => o.id), ['a']);
+  assert.deepEqual(filtrarOrdenes(ordenes, 'FERRETERIA').map(o => o.id), ['b']);
+  assert.deepEqual(filtrarOrdenes(ordenes, 'os-0003').map(o => o.id), ['c']);
+  assert.deepEqual(filtrarOrdenes(ordenes, '  '), ordenes);
+  assert.deepEqual(filtrarOrdenes(ordenes, ''), ordenes);
+  assert.deepEqual(filtrarOrdenes(ordenes, 'zzz'), []);
 });

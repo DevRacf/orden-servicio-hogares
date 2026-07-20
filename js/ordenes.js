@@ -16,6 +16,17 @@ export function etiquetasServicios(servicios) {
   return (servicios || []).map(s => TIPOS_SERVICIO[s] || s);
 }
 
+function normalizar(texto) {
+  return (texto || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+export function filtrarOrdenes(ordenes, texto) {
+  const t = normalizar(texto).trim();
+  if (!t) return ordenes;
+  return (ordenes || []).filter(o =>
+    normalizar(o.cliente_nombre).includes(t) || normalizar(o.folio).includes(t));
+}
+
 export function validarNuevaOrden(d) {
   const errores = [];
   if (!d.cliente_nombre?.trim()) errores.push('El nombre del cliente es obligatorio');
