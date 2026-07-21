@@ -936,12 +936,13 @@ git commit -m "Logo embebido y marca de agua en el PDF"
 **Files:**
 - Modify: solo lo que la verificación exija corregir
 
-- [ ] **Step 1: Pruebas unitarias completas**
+- [x] **Step 1: Pruebas unitarias completas**
 
 Run: `npm test`
 Expected: PASS — 19 en verde (o 18 si la Tarea 6 quedó BLOCKED por falta de logo).
+Resultado: PASS, 19/19 en verde.
 
-- [ ] **Step 2: Simulacro offline completo en navegador**
+- [x] **Step 2: Simulacro offline completo en navegador**
 
 Con el servidor local y Supabase real. Se necesita una sesión iniciada: usar la que ya
 persiste en el navegador de pruebas (quedó de verificaciones anteriores). Si no hay
@@ -972,7 +973,12 @@ window.fetch = (...args) => {
    orden está completada (verificar vía la propia app recargando la lista).
 8. Consola: solo el `console.error` esperado de los intentos sin red, nada más.
 
-- [ ] **Step 3: Simulacro de señal lenta (no caída total) al completar con firmas**
+Resultado: los 7 puntos se confirmaron con una orden real (OS-0007). No hubo
+`console.error` en este caso concreto porque `completarOrden` no loguea el fallo de red
+que atrapa (solo `sincronizar()` lo hace, y aquí la sincronización tuvo éxito) — la
+consola quedó limpia, lo cual cumple igual el "nada más" del punto 8.
+
+- [x] **Step 3: Simulacro de señal lenta (no caída total) al completar con firmas**
 
 El escenario más realista en campo no es una desconexión limpia sino una señal débil
 que deja la petición colgada. Verificar que el límite de 8 segundos
@@ -1000,26 +1006,57 @@ window.fetch = (...args) => {
    (no en `listarOrdenes`/`obtenerOrden`, que no cargan firmas) — no es necesario
    resolverlo en esta verificación si el margen de 5s ya pasa.
 
-- [ ] **Step 4: Letrero de sin conexión**
+Resultado: con una orden real (OS-0008) y 5s de retraso, el cierre se completó por la
+vía normal de red (quedó "completada" sin chip "por enviar", cola vacía) — el margen de
+5s bajo el límite de 8s es suficiente.
 
-`window.dispatchEvent(new Event('offline'))` → aparece el letrero;
-`new Event('online')` → desaparece. (El evento sintético no cambia `navigator.onLine`,
-así que verificar el letrero con los eventos y aceptar que `navigator.onLine` real siga
-true.)
+- [x] **Step 4: Letrero de sin conexión**
 
-- [ ] **Step 5: Prueba real del service worker**
+El listener de `offline`/`online` en `js/app.js` decide si mostrar el letrero mirando
+`navigator.onLine` (no el hecho de haber recibido el evento), así que
+`window.dispatchEvent(new Event('offline'))` por sí solo **no mueve el letrero** en una
+máquina con internet real — `navigator.onLine` sigue en `true`. Para probar ese camino de
+verdad hay que simular también `navigator.onLine`:
+
+```js
+Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
+window.dispatchEvent(new Event('offline')); // ahora sí aparece el letrero
+Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+window.dispatchEvent(new Event('online')); // desaparece
+delete navigator.onLine; // restaura el getter nativo
+```
+
+El otro camino — señal débil, sin desconexión real — se prueba disparando
+`window.dispatchEvent(new Event('fallo-red-detectado'))` directamente: ese sí hace
+aparecer el letrero sin tocar `navigator.onLine`, y se mantiene visible 15s
+(`VENTANA_AVISO_MS`) tras el último aviso aunque llegue un `online` en medio, ocultándose
+solo, todo verificado y correcto.
+
+- [x] **Step 5: Prueba real del service worker**
 
 1. Con la app cargada y el SW activo, **detener** el servidor local
    (`pkill -f "http.server 8123"`).
 2. Recargar la página completa (F5/navigate): la app debe abrir desde la caché del SW.
 3. Reiniciar el servidor para las siguientes pruebas.
 
-- [ ] **Step 6: Regresión general (escritorio y 375px)**
+Resultado: con el servidor detenido, la app abrió completa (app shell + lista de
+órdenes desde `cache_ordenes`) servida por el SW, sin errores en consola.
+
+- [x] **Step 6: Regresión general (escritorio y 375px)**
 
 Flujo normal con red: lista, buscador, crear orden con servicios, completar con firmas,
 PDF con marca de agua, sin desbordes horizontales en 375px, consola limpia.
 
-- [ ] **Step 7: Commit de correcciones (solo si hubo)**
+Resultado: buscador probado en escritorio (filtra "regina" correctamente); en 375px sin
+desborde horizontal (`scrollWidth === clientWidth`), lista y detalle de orden completada
+(con botón de PDF) se ven bien, consola limpia. Crear orden + completar con firmas + PDF
+con marca de agua ya se habían cubierto con red real en los Steps 2 y 3.
+
+- [x] **Step 7: Commit de correcciones (solo si hubo)**
+
+No se encontraron bugs de código. Único cambio: se corrigió la redacción del Step 4 de
+este mismo documento (el paso, tal como estaba escrito, no describía correctamente el
+comportamiento real del letrero con eventos sintéticos puros).
 
 ```bash
 git add -A
