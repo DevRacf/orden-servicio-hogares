@@ -357,7 +357,18 @@ function guardarCola(cola) { localStorage.setItem(LLAVE_COLA, JSON.stringify(col
 function esFalloDeRed(err) {
   return !navigator.onLine ||
     err instanceof TypeError ||
-    /fetch|network/i.test(String(err?.message || ''));
+    /fetch|network|tiempo agotado/i.test(String(err?.message || ''));
+}
+
+// Con señal débil la petición no falla, se queda colgada — el caso real de
+// un técnico con una barra de señal, no una desconexión limpia. Sin esto,
+// listarOrdenes/obtenerOrden/completarOrden se quedarían esperando para
+// siempre en vez de caer al respaldo local.
+function conTiempoLimite(promesa, ms = 8000) {
+  return Promise.race([
+    promesa,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('tiempo agotado de red')), ms))
+  ]);
 }
 
 let sincronizando = false;
@@ -373,10 +384,10 @@ export async function sincronizar() {
       try {
         // Se manda la fecha real de cierre (cuando el técnico terminó, no
         // cuando volvió la señal) para que datos-supabase.js la respete.
-        await sb.completarOrden(item.ordenId, {
+        await conTiempoLimite(sb.completarOrden(item.ordenId, {
           ...item.cierre,
           completed_at: new Date(item.timestamp).toISOString()
-        });
+        }));
         cola = quitarDeCola(cola, item.ordenId);
         guardarCola(cola);
       } catch (err) {
@@ -392,7 +403,7 @@ export async function sincronizar() {
 export async function listarOrdenes() {
   try {
     await sincronizar();
-    const ordenes = await sb.listarOrdenes();
+    const ordenes = await conTiempoLimite(sb.listarOrdenes());
     guardarCache(ordenes);
     return aplicarCierresPendientes(ordenes, leerCola());
   } catch (err) {
@@ -405,7 +416,7 @@ export async function listarOrdenes() {
 
 export async function obtenerOrden(id) {
   try {
-    const orden = await sb.obtenerOrden(id);
+    const orden = await conTiempoLimite(sb.obtenerOrden(id));
     if (orden) {
       const cache = leerCache();
       if (cache) {
@@ -423,11 +434,13 @@ export async function obtenerOrden(id) {
 }
 
 export async function completarOrden(id, cierre) {
+  // El try solo cubre la petición de red: si el guardado en el servidor ya
+  // tuvo éxito, un problema local después (p. ej. localStorage lleno) no debe
+  // reclasificarse como "sin conexión" y volver a encolar un cierre que ya
+  // se guardó de verdad.
+  let orden;
   try {
-    const orden = await sb.completarOrden(id, cierre);
-    const cache = leerCache();
-    if (cache) guardarCache(cache.map(o => (o.id === id ? orden : o)));
-    return orden;
+    orden = await conTiempoLimite(sb.completarOrden(id, cierre));
   } catch (err) {
     if (!esFalloDeRed(err)) throw err;
     const cola = agregarACola(leerCola(), id, cierre, Date.now());
@@ -436,6 +449,12 @@ export async function completarOrden(id, cierre) {
     return aplicarCierresPendientes(cache, cola).find(o => o.id === id)
       || aplicarCierresPendientes([{ id, estado: 'pendiente' }], cola)[0];
   }
+  // Si ya había un cierre encolado para esta misma orden (un intento offline
+  // previo), se descarta: el que se acaba de guardar con red es el vigente.
+  guardarCola(quitarDeCola(leerCola(), id));
+  const cache = leerCache();
+  if (cache) guardarCache(cache.map(o => (o.id === id ? orden : o)));
+  return orden;
 }
 
 export const { iniciarSesion, haySesion, cerrarSesion, listarTecnicos, crearOrden } = sb;
