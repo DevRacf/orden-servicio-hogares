@@ -828,8 +828,17 @@ console.log(`js/logo.js generado (${ancho}x${alto}, ${Math.round(png.length / 10
 
 ```bash
 ls -la recursos/logo-hi.png
-# Solo si pesa >150KB:
-sips -Z 800 recursos/logo-hi.png
+```
+
+  Si pesa más de 150KB: `-Z 800` solo ayuda si el logo mide más de 800px de lado —
+  verificar las dimensiones reales primero (`sips -g pixelWidth -g pixelHeight
+  recursos/logo-hi.png`) y usar un valor de `-Z` menor a esa medida (probado con el
+  logo real de Andre: 636×735px a 219KB, `sips -Z 400` lo reescala proporcionalmente a
+  346×400px y lo deja en ~84KB, de sobra para una marca de agua que en el PDF mide
+  solo 120mm de ancho a 10% de opacidad):
+
+```bash
+sips -Z 400 recursos/logo-hi.png
 ```
 
 - [ ] **Step 3: Generar `js/logo.js`**
