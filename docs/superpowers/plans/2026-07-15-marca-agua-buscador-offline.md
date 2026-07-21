@@ -1033,7 +1033,24 @@ git commit -m "Correcciones tras verificación end-to-end del modo offline"
 - **Rama**: todo sobre `desarrollo` (creada en la Tarea 1 Step 0). El merge a `main` y
   el push a GitHub Pages los decide Andre al final (skill de cierre de rama).
 - **El logo** (`recursos/logo-hi.png`) lo entrega Andre; si no está al llegar a la
-  Tarea 6, esa tarea se reporta BLOCKED y las demás continúan.
+  Tarea 6, esa tarea se reporta BLOCKED y las demás continúan. El archivo que Andre
+  compartió es una tarjeta completa (logo + nombre + WhatsApp + dirección); Andre
+  eligió usar solo el gráfico del logo como marca de agua, así que antes de generar
+  `js/logo.js` se recorta la tarjeta a solo la figura (sin el título ni el texto de
+  contacto) con `sips --cropOffset <y> 0 -c <alto> <ancho>` — los valores exactos
+  dependen de las proporciones del archivo fuente; verificar visualmente el recorte
+  (por ejemplo generando un PDF de prueba y convirtiéndolo a imagen con
+  `sips -s format png archivo.pdf --out archivo.png`) antes de darlo por bueno.
+- **Trampa de caché al probar cambios de `js/pdf.js`/`js/logo.js` en local con el SW
+  activo**: si ya se registró el service worker en una sesión de pruebas anterior
+  (Tarea 5), un cambio posterior a estos archivos puede seguir sirviendo la versión
+  vieja aunque se use `import('./archivo.js?v=' + Date.now())` — ni el cache-busting
+  del import ni la estrategia "red primero" del SW garantizan ver el cambio al
+  instante dentro de la misma pestaña/perfil de pruebas. Si el tamaño o contenido del
+  PDF generado no cambia después de editar `js/pdf.js`, antes de sospechar del código:
+  `(await navigator.serviceWorker.getRegistrations()).forEach(r => r.unregister())` +
+  `(await caches.keys()).forEach(k => caches.delete(k))`, y recargar la página con
+  `force: true`.
 - **Los eventos `online`/`offline` sintéticos** no cambian `navigator.onLine`; por eso
   `esFalloDeRed` también acepta el `TypeError` del fetch — el monkey-patch de la Tarea 7
   simula el fallo real de red por esa vía.
