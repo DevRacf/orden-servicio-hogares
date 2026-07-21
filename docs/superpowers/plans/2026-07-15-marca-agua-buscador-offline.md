@@ -130,7 +130,7 @@ git commit -m "Función pura de búsqueda por cliente o folio"
   `<a href="#/nueva" class="boton">+ Nueva orden</a>`:
 
 ```html
-      <input type="search" id="buscador" placeholder="Buscar por cliente o folio" autocomplete="off">
+      <input type="search" id="buscador" aria-label="Buscar por cliente o folio" placeholder="Buscar por cliente o folio" autocomplete="off">
 ```
 
 - [ ] **Step 2: En `js/app.js`, sumar `filtrarOrdenes` al import de `./ordenes.js`**
@@ -164,14 +164,18 @@ function pintarListas(ordenes) {
 }
 
 async function renderLista() {
+  // Si la lista ya estaba visible (recarga en el sitio: reconexión, sincronización
+  // de la cola offline), no es una navegación nueva — se conserva lo que el usuario
+  // ya escribió en el buscador en vez de borrarlo bajo sus dedos.
+  const yaVisible = !document.getElementById('vista-lista').classList.contains('oculto');
   mostrarVista('vista-lista');
+  if (!yaVisible) $('#buscador').value = '';
   const hashEsperado = location.hash || '#/';
   const ordenes = await datos.listarOrdenes();
   // Si el usuario ya navegó a otra vista mientras esto cargaba, no pisar su pantalla actual.
   if ((location.hash || '#/') !== hashEsperado) return;
   ordenesCargadas = ordenes;
-  $('#buscador').value = '';
-  pintarListas(ordenes);
+  pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
 }
 ```
 
