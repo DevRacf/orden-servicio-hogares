@@ -600,30 +600,87 @@ de ejecución lo guarda sola en la primera visita, igual que las fuentes de Goog
   <div id="aviso-offline" class="aviso-offline oculto">Sin conexión — los cierres se guardarán y enviarán solos</div>
 ```
 
-- [ ] **Step 3: En `js/app.js`, agregar el chip "por enviar".**
+- [ ] **Step 3: En `js/app.js`, agregar el chip "por enviar" y proteger el
+  formulario de cierre contra una recarga en segundo plano.**
 
-En `tarjetaOrden`, reemplazar la línea:
+  Este paso agrega el listener de reconexión (Step 4) llama a `rutear()`, que si el
+  técnico está viendo una orden pendiente vuelve a llamar `renderOrden(id)` — sin una
+  protección, eso borraría el trabajo ya escrito y destruiría las firmas ya dibujadas
+  (incluida la del cliente) apenas volviera la señal, sin ningún aviso. La protección
+  se agrega aquí, en el mismo paso que toca `renderOrden`, para no dejarla para
+  después de conectar el disparador.
+
+  En `tarjetaOrden`, reemplazar la línea:
 
 ```js
     <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}
 ```
 
-por:
+  por:
 
 ```js
     <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}${o.porEnviar ? ' <span class="estado por-enviar">por enviar</span>' : ''}
 ```
 
-En `renderOrden`, reemplazar la línea del encabezado:
+  Reemplazar la función `renderOrden` completa por:
 
 ```js
-    <h2>${escapar(o.folio)} <span class="estado ${o.estado}">${o.estado}</span></h2>
-```
+async function renderOrden(id) {
+  // Si ya se estaba viendo esta misma orden pendiente (p. ej. una reconexión en
+  // segundo plano volvió a llamar rutear()), no se reconstruye el formulario:
+  // perdería el trabajo/materiales ya escritos y destruiría los pads de firma
+  // con lo que ya se hubiera firmado, incluida la firma del cliente.
+  const yaEnEstaOrdenPendiente = !document.getElementById('vista-orden').classList.contains('oculto')
+    && ordenActual?.id === id
+    && ordenActual?.estado === 'pendiente';
+  mostrarVista('vista-orden');
+  const hashEsperado = location.hash;
+  const orden = await datos.obtenerOrden(id);
+  // Si el usuario ya abrió otra orden mientras esta cargaba, no pisar sus datos
+  // ni crear un segundo SignaturePad sobre los mismos canvas.
+  if (location.hash !== hashEsperado) return;
+  if (yaEnEstaOrdenPendiente && orden?.estado === 'pendiente') return;
+  ordenActual = orden;
+  if (!ordenActual) { location.hash = '#/'; return; }
+  const o = ordenActual;
 
-por:
-
-```js
+  $('#orden-datos').innerHTML = `
     <h2>${escapar(o.folio)} <span class="estado ${o.estado}">${o.estado}</span>${o.porEnviar ? ' <span class="estado por-enviar">por enviar</span>' : ''}</h2>
+    <dl>
+      <dt>Cliente</dt><dd>${escapar(o.cliente_nombre)} (${TIPOS_CLIENTE[o.tipo_cliente] || ''})</dd>
+      <dt>Teléfono</dt><dd>${escapar(o.cliente_telefono || '—')}</dd>
+      <dt>Dirección</dt><dd>${escapar(o.cliente_direccion)}</dd>
+      <dt>Servicios</dt><dd>${etiquetasServicios(o.servicios).map(e => escapar(e)).join(', ')}</dd>
+      <dt>Solicitado</dt><dd>${escapar(o.descripcion || '—')}</dd>
+      <dt>Técnico</dt><dd>${escapar(o.tecnico)}</dd>
+      <dt>Creada</dt><dd>${formatearFecha(o.created_at)}</dd>
+      ${o.estado === 'completada' ? `
+      <dt>Trabajo realizado</dt><dd>${escapar(o.trabajo_realizado)}</dd>
+      <dt>Materiales</dt><dd>${(o.materiales || [])
+        .map(m => `${m.cantidad} × ${escapar(m.descripcion)}`).join('<br>') || '—'}</dd>
+      <dt>Cerrada</dt><dd>${formatearFecha(o.completed_at)}</dd>` : ''}
+    </dl>`;
+
+  // #firma-tecnico/#firma-cliente son canvas fijos que se reutilizan entre
+  // órdenes; hay que soltar los listeners del pad anterior antes de crear
+  // uno nuevo (o de dejar de necesitarlo, si la orden ya está completada).
+  pads?.tecnico?.destruir();
+  pads?.cliente?.destruir();
+  pads = null;
+
+  const esPendiente = o.estado === 'pendiente';
+  $('#form-completar').classList.toggle('oculto', !esPendiente);
+  $('#btn-pdf').classList.toggle('oculto', esPendiente);
+
+  if (esPendiente) {
+    $('#trabajo-realizado').value = '';
+    $('#filas-materiales').replaceChildren(filaMaterial());
+    pads = {
+      tecnico: crearPad(document.getElementById('firma-tecnico')),
+      cliente: crearPad(document.getElementById('firma-cliente'))
+    };
+  }
+}
 ```
 
 - [ ] **Step 4: En `js/app.js`, agregar al final del archivo** (después de la línea
@@ -682,7 +739,18 @@ Expected: 1 registro, caché `orden-servicio-v1` presente, ~16 archivos precarga
 Recargar de nuevo con red: la página viene fresca del servidor (red primero). Consola
 sin errores.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Verificar que una reconexión en segundo plano no borra el
+  formulario de cierre en curso**
+
+1. Abrir una orden pendiente, escribir algo en "Trabajo realizado" y dibujar una firma
+   en el pad del técnico (sin guardar todavía).
+2. Simular el regreso de la señal: `window.dispatchEvent(new Event('online'))`.
+3. Confirmar que el texto escrito y la firma siguen ahí (no se limpiaron) — el chip
+   `#trabajo-realizado` conserva su valor y el canvas del pad de técnico sigue con la
+   firma dibujada.
+4. Confirmar que sí se puede guardar normalmente después de esto.
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add sw.js index.html js/app.js css/styles.css
