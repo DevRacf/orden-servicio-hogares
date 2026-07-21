@@ -261,8 +261,15 @@ $('#form-completar').addEventListener('submit', async (e) => {
 window.addEventListener('hashchange', rutear);
 rutear();
 
+// navigator.onLine no detecta señal débil (la petición se cuelga, no falla
+// limpio) — js/offline.js avisa esos casos con 'fallo-red-detectado'. Se
+// muestra el letrero por 15s tras el último aviso, no solo con offline real.
+let ultimoFalloDeRed = 0;
+const VENTANA_AVISO_MS = 15000;
+
 function actualizarAvisoConexion() {
-  $('#aviso-offline').classList.toggle('oculto', navigator.onLine);
+  const falloReciente = Date.now() - ultimoFalloDeRed < VENTANA_AVISO_MS;
+  $('#aviso-offline').classList.toggle('oculto', navigator.onLine && !falloReciente);
 }
 
 window.addEventListener('online', async () => {
@@ -271,6 +278,11 @@ window.addEventListener('online', async () => {
   rutear();
 });
 window.addEventListener('offline', actualizarAvisoConexion);
+window.addEventListener('fallo-red-detectado', () => {
+  ultimoFalloDeRed = Date.now();
+  actualizarAvisoConexion();
+  setTimeout(actualizarAvisoConexion, VENTANA_AVISO_MS + 100);
+});
 actualizarAvisoConexion();
 
 // Al arrancar la app también se reenvía lo encolado (p. ej. si la señal volvió

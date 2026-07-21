@@ -21,6 +21,15 @@ function esFalloDeRed(err) {
     /fetch|network|tiempo agotado/i.test(String(err?.message || ''));
 }
 
+// navigator.onLine solo dice si el teléfono tiene alguna interfaz de red
+// activa, no si esa red de verdad llega a internet — con una barra de señal
+// se queda en "online" mientras las peticiones se cuelgan y agotan el tiempo.
+// Este aviso le permite al letrero de la UI reaccionar también a esos casos,
+// no solo al evento nativo `offline`.
+function avisarFalloDeRed() {
+  window.dispatchEvent(new Event('fallo-red-detectado'));
+}
+
 // Con señal débil la petición no falla, se queda colgada — el caso real de
 // un técnico con una barra de señal, no una desconexión limpia. Sin esto,
 // listarOrdenes/obtenerOrden/completarOrden se quedarían esperando para
@@ -71,6 +80,7 @@ export async function listarOrdenes() {
     return aplicarCierresPendientes(ordenes, leerCola());
   } catch (err) {
     if (!esFalloDeRed(err)) throw err;
+    avisarFalloDeRed();
     const cache = leerCache();
     if (!cache) throw err;
     return aplicarCierresPendientes(cache, leerCola());
@@ -91,6 +101,7 @@ export async function obtenerOrden(id) {
     return aplicarCierresPendientes(orden ? [orden] : [], leerCola())[0] || null;
   } catch (err) {
     if (!esFalloDeRed(err)) throw err;
+    avisarFalloDeRed();
     const cache = leerCache() || [];
     return aplicarCierresPendientes(cache, leerCola()).find(o => o.id === id) || null;
   }
@@ -106,6 +117,7 @@ export async function completarOrden(id, cierre) {
     orden = await conTiempoLimite(sb.completarOrden(id, cierre));
   } catch (err) {
     if (!esFalloDeRed(err)) throw err;
+    avisarFalloDeRed();
     // Caso aceptado: si esto marcó "tiempo agotado" pero el guardado en el
     // servidor en realidad sí llegó a completarse un instante después, se
     // reenviará igual al sincronizar — mismos datos, misma orden, solo con
