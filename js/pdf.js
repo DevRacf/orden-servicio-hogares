@@ -1,4 +1,5 @@
 import { TIPOS_CLIENTE, formatearFecha, etiquetasServicios } from './ordenes.js';
+import { LOGO_DATAURL, LOGO_ANCHO, LOGO_ALTO } from './logo.js';
 
 export function seccionesPdf(orden) {
   return [
@@ -23,6 +24,16 @@ function bloqueTexto(doc, titulo, texto, y, margen, ancho) {
   return y + lineas.length * 5 + 6;
 }
 
+// Marca de agua: logo centrado y tenue detrás del contenido de cada página.
+function marcaDeAgua(doc) {
+  const ANCHO_MARCA = 120;
+  const altoMarca = ANCHO_MARCA * (LOGO_ALTO / LOGO_ANCHO);
+  doc.saveGraphicsState();
+  doc.setGState(new doc.GState({ opacity: 0.1 }));
+  doc.addImage(LOGO_DATAURL, 'PNG', (216 - ANCHO_MARCA) / 2, (279 - altoMarca) / 2, ANCHO_MARCA, altoMarca);
+  doc.restoreGraphicsState();
+}
+
 export function generarPdf(orden) {
   const { jsPDF } = window.jspdf;
   // compress: true reduce el peso final ~99% (las firmas son la parte más
@@ -35,8 +46,10 @@ export function generarPdf(orden) {
   let y = 20;
 
   function saltarPaginaSiNecesario() {
-    if (y > ABAJO) { doc.addPage(); y = 30; }
+    if (y > ABAJO) { doc.addPage(); marcaDeAgua(doc); y = 30; }
   }
+
+  marcaDeAgua(doc);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
@@ -84,7 +97,7 @@ export function generarPdf(orden) {
   }
 
   // Firmas al pie (nueva página si el contenido bajó demasiado)
-  if (y > 225) { doc.addPage(); y = 30; } else { y = Math.max(y + 10, 225); }
+  if (y > 225) { doc.addPage(); marcaDeAgua(doc); y = 30; } else { y = Math.max(y + 10, 225); }
   const ANCHO_FIRMA = 70;
   const ALTO_FIRMA = 25;
   if (orden.firma_tecnico) {

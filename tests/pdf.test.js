@@ -38,3 +38,9 @@ test('seccionesPdf usa guion si no hay servicios', () => {
   const mapa = Object.fromEntries(seccionesPdf({ ...orden, servicios: [] }));
   assert.equal(mapa['Servicios'], '—');
 });
+
+test('el logo embebido es un PNG válido con dimensiones', async () => {
+  const { LOGO_DATAURL, LOGO_ANCHO, LOGO_ALTO } = await import('../js/logo.js');
+  assert.ok(LOGO_DATAURL.startsWith('data:image/png;base64,'));
+  assert.ok(LOGO_ANCHO > 0 && LOGO_ALTO > 0);
+});
