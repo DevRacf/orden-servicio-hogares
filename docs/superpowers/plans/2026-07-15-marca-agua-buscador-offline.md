@@ -1054,9 +1054,32 @@ con marca de agua ya se habían cubierto con red real en los Steps 2 y 3.
 
 - [x] **Step 7: Commit de correcciones (solo si hubo)**
 
-No se encontraron bugs de código. Único cambio: se corrigió la redacción del Step 4 de
-este mismo documento (el paso, tal como estaba escrito, no describía correctamente el
-comportamiento real del letrero con eventos sintéticos puros).
+No se encontraron bugs de código durante la verificación manual. Único cambio de este
+paso: se corrigió la redacción del Step 4 de este mismo documento (el paso, tal como
+estaba escrito, no describía correctamente el comportamiento real del letrero con
+eventos sintéticos puros).
+
+---
+
+## Revisión final holística (post-Tarea 7)
+
+Tras completar las 7 tareas se hizo una revisión final de todo el diff acumulado del
+plan (no solo tarea por tarea). Encontró un bug real que ninguna revisión individual
+había detectado: `sw.js` no incluía `js/logo.js` en `PRECARGA`. Como `js/pdf.js` importa
+`logo.js` de forma estática y `js/app.js` importa `pdf.js` de forma estática, una
+instalación del service worker completamente en frío que nunca llegara a tener red antes
+de la primera visita (p. ej. abrir la app por primera vez ya en un sitio sin señal)
+habría hecho fallar el import de toda la app, no solo el PDF con marca de agua. La Tarea
+7 no lo detectó porque su prueba del service worker (Step 5) se hizo sobre una sesión que
+ya había cargado la app con red antes de cortar el servidor.
+
+Arreglo aplicado: se agregó `'js/logo.js'` a `PRECARGA` y se subió `CACHE` de
+`'orden-servicio-v1'` a `'orden-servicio-v2'` en `sw.js` (para forzar la reprecarga en
+instalaciones que ya tuvieran el service worker anterior registrado). Verificado en
+navegador: con el servidor detenido y una instalación limpia del service worker, la app
+carga completa y genera un PDF con la marca de agua embebida
+(`/XObject`/`/Image`/`FlateDecode` presentes en el PDF resultante) sin ningún error en
+consola.
 
 ```bash
 git add -A

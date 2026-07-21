@@ -2,7 +2,7 @@
 // - Archivos locales: red primero (los deploys nuevos llegan solos), caché de respaldo.
 // - CDN y fuentes: caché primero (URLs versionadas que no cambian).
 // - *.supabase.co nunca se intercepta: su fallo es lo que activa js/offline.js.
-const CACHE = 'orden-servicio-v1';
+const CACHE = 'orden-servicio-v2';
 
 const PRECARGA = [
   '.',
@@ -10,7 +10,7 @@ const PRECARGA = [
   'css/styles.css',
   'js/app.js', 'js/config.js', 'js/datos.js', 'js/datos-demo.js',
   'js/datos-supabase.js', 'js/offline.js', 'js/offline-logica.js',
-  'js/ordenes.js', 'js/firma.js', 'js/pdf.js',
+  'js/ordenes.js', 'js/firma.js', 'js/pdf.js', 'js/logo.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
   'https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js',
   'https://cdn.jsdelivr.net/npm/jspdf@2/dist/jspdf.umd.min.js'
