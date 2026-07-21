@@ -403,6 +403,11 @@ export async function sincronizar() {
         guardarCola(quitarDeCola(leerCola(), item.ordenId));
       } catch (err) {
         console.error('No se pudo sincronizar el cierre de', item.ordenId, err);
+        // La causa típica es señal débil (mismo conTiempoLimite que el resto);
+        // se avisa igual aunque no se distinga la causa exacta, para que el
+        // letrero no se quede apagado durante una sincronización en segundo
+        // plano que en realidad sigue fallando.
+        avisarFalloDeRed();
         break;
       }
     }
