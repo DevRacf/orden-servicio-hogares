@@ -325,6 +325,10 @@ git commit -m "Lógica pura de la cola de cierres offline"
 **Files:**
 - Create: `js/offline.js`
 - Modify: `js/datos.js`
+- Modify: `js/datos-supabase.js` (para que `completarOrden` respete una fecha de
+  cierre ya dada, en vez de siempre usar el momento de la llamada — necesario
+  para que la sincronización no reemplace la hora real en que el técnico
+  completó la orden por la hora en que se recuperó la señal)
 
 Sin pruebas unitarias aquí (localStorage/red no existen en Node); la lógica con
 decisiones ya quedó probada en la Tarea 3 y el resto se verifica en navegador en la
@@ -367,7 +371,12 @@ export async function sincronizar() {
     let cola = leerCola();
     for (const item of [...cola]) {
       try {
-        await sb.completarOrden(item.ordenId, item.cierre);
+        // Se manda la fecha real de cierre (cuando el técnico terminó, no
+        // cuando volvió la señal) para que datos-supabase.js la respete.
+        await sb.completarOrden(item.ordenId, {
+          ...item.cierre,
+          completed_at: new Date(item.timestamp).toISOString()
+        });
         cola = quitarDeCola(cola, item.ordenId);
         guardarCola(cola);
       } catch (err) {
@@ -451,22 +460,38 @@ export const {
 export const sincronizar = impl.sincronizar;
 ```
 
-- [ ] **Step 3: Sanidad de sintaxis y pruebas**
+- [ ] **Step 3: Modificar `js/datos-supabase.js`** para que `completarOrden` respete
+  una `completed_at` ya incluida en `cierre` (la sincronización offline la manda; el
+  flujo normal en línea no la manda, así que se sigue usando "ahora" como antes).
+  Cambiar (dentro de `completarOrden`):
 
-Run: `node --check js/offline.js && node --check js/datos.js && npm test`
+```js
+    .update({ ...cierre, estado: 'completada', completed_at: new Date().toISOString() })
+```
+
+  por:
+
+```js
+    .update({ ...cierre, estado: 'completada', completed_at: cierre.completed_at || new Date().toISOString() })
+```
+
+- [ ] **Step 4: Sanidad de sintaxis y pruebas**
+
+Run: `node --check js/offline.js && node --check js/datos.js && node --check js/datos-supabase.js && npm test`
 Expected: sin errores de sintaxis; 18 pruebas en verde (nada de esto corre en Node).
 
-- [ ] **Step 4: Verificación rápida en navegador (camino con red)**
+- [ ] **Step 5: Verificación rápida en navegador (camino con red)**
 
 Con el servidor local y la app en modo producción (Supabase real): entrar, ver la lista,
-abrir una orden — todo debe funcionar igual que antes (la capa envuelve sin cambiar el
-comportamiento con red). Consola sin errores.
+abrir una orden, completar una orden normal (con red) y confirmar que su fecha de
+cierre sigue siendo "ahora" como siempre — todo debe funcionar igual que antes (la
+capa envuelve sin cambiar el comportamiento con red). Consola sin errores.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add js/offline.js js/datos.js
-git commit -m "Capa offline: caché de órdenes y cola de cierres sobre Supabase"
+git add js/offline.js js/datos.js js/datos-supabase.js
+git commit -m "Capa offline: caché de órdenes, cola de cierres y fecha real de cierre al sincronizar"
 ```
 
 ---
