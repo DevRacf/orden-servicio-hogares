@@ -98,14 +98,18 @@ function pintarListas(ordenes) {
 }
 
 async function renderLista() {
+  // Si la lista ya estaba visible (recarga en el sitio: reconexión, sincronización
+  // de la cola offline), no es una navegación nueva — se conserva lo que el usuario
+  // ya escribió en el buscador en vez de borrarlo bajo sus dedos.
+  const yaVisible = !document.getElementById('vista-lista').classList.contains('oculto');
   mostrarVista('vista-lista');
+  if (!yaVisible) $('#buscador').value = '';
   const hashEsperado = location.hash || '#/';
   const ordenes = await datos.listarOrdenes();
   // Si el usuario ya navegó a otra vista mientras esto cargaba, no pisar su pantalla actual.
   if ((location.hash || '#/') !== hashEsperado) return;
   ordenesCargadas = ordenes;
-  $('#buscador').value = '';
-  pintarListas(ordenes);
+  pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
 }
 
 async function renderNueva() {
