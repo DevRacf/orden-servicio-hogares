@@ -2,7 +2,7 @@ import * as datos from './datos.js';
 import {
   TIPOS_CLIENTE,
   validarNuevaOrden, validarCierre, limpiarMateriales,
-  ordenarParaLista, formatearFecha, etiquetasServicios
+  ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes
 } from './ordenes.js';
 import { crearPad } from './firma.js';
 import { compartirPdf } from './pdf.js';
@@ -11,6 +11,7 @@ const $ = (sel) => document.querySelector(sel);
 
 let ordenActual = null;
 let pads = null;
+let ordenesCargadas = [];
 
 function filaMaterial() {
   const div = document.createElement('div');
@@ -88,17 +89,23 @@ function tarjetaOrden(o) {
   </a>`;
 }
 
+function pintarListas(ordenes) {
+  const { pendientes, completadas } = ordenarParaLista(ordenes);
+  $('#lista-pendientes').innerHTML =
+    pendientes.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pendientes</p>';
+  $('#lista-completadas').innerHTML =
+    completadas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes completadas</p>';
+}
+
 async function renderLista() {
   mostrarVista('vista-lista');
   const hashEsperado = location.hash || '#/';
   const ordenes = await datos.listarOrdenes();
   // Si el usuario ya navegó a otra vista mientras esto cargaba, no pisar su pantalla actual.
   if ((location.hash || '#/') !== hashEsperado) return;
-  const { pendientes, completadas } = ordenarParaLista(ordenes);
-  $('#lista-pendientes').innerHTML =
-    pendientes.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pendientes</p>';
-  $('#lista-completadas').innerHTML =
-    completadas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes completadas</p>';
+  ordenesCargadas = ordenes;
+  $('#buscador').value = '';
+  pintarListas(ordenes);
 }
 
 async function renderNueva() {
@@ -171,6 +178,10 @@ $('#form-login').addEventListener('submit', async (e) => {
 $('#btn-salir').addEventListener('click', async () => {
   await datos.cerrarSesion();
   navegar('#/');
+});
+
+$('#buscador').addEventListener('input', () => {
+  pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
 });
 
 $('#form-nueva').addEventListener('submit', async (e) => {

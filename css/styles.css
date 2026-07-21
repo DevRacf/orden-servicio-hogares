@@ -191,3 +191,5 @@ canvas.firma {
   border-radius: 10px;
   touch-action: none;
 }
+
+#buscador { margin-top: 0.8rem; }
