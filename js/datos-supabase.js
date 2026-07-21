@@ -58,7 +58,7 @@ export async function crearOrden(datos) {
 export async function completarOrden(id, cierre) {
   const { data, error } = await obtenerCliente()
     .from('ordenes')
-    .update({ ...cierre, estado: 'completada', completed_at: new Date().toISOString() })
+    .update({ ...cierre, estado: 'completada', completed_at: cierre.completed_at || new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
