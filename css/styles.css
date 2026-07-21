@@ -193,3 +193,14 @@ canvas.firma {
 }
 
 #buscador { margin-top: 0.8rem; }
+
+.aviso-offline {
+  background: var(--pendiente-fondo);
+  color: var(--pendiente-texto);
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.5rem 1rem;
+}
+
+.estado.por-enviar { background: var(--azul); color: var(--blanco); }

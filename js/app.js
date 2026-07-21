@@ -83,7 +83,7 @@ function escapar(texto) {
 function tarjetaOrden(o) {
   const etiquetas = etiquetasServicios(o.servicios).map(e => `<span class="etiqueta">${escapar(e)}</span>`).join('');
   return `<a class="tarjeta" href="#/orden/${o.id}">
-    <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}
+    <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}${o.porEnviar ? ' <span class="estado por-enviar">por enviar</span>' : ''}
     <div class="etiquetas-servicio">${etiquetas}</div>
     <span>${escapar(o.tecnico)}</span>
   </a>`;
@@ -122,18 +122,26 @@ async function renderNueva() {
 }
 
 async function renderOrden(id) {
+  // Si ya se estaba viendo esta misma orden pendiente (p. ej. una reconexión en
+  // segundo plano volvió a llamar rutear()), no se reconstruye el formulario:
+  // perdería el trabajo/materiales ya escritos y destruiría los pads de firma
+  // con lo que ya se hubiera firmado, incluida la firma del cliente.
+  const yaEnEstaOrdenPendiente = !document.getElementById('vista-orden').classList.contains('oculto')
+    && ordenActual?.id === id
+    && ordenActual?.estado === 'pendiente';
   mostrarVista('vista-orden');
   const hashEsperado = location.hash;
   const orden = await datos.obtenerOrden(id);
   // Si el usuario ya abrió otra orden mientras esta cargaba, no pisar sus datos
   // ni crear un segundo SignaturePad sobre los mismos canvas.
   if (location.hash !== hashEsperado) return;
+  if (yaEnEstaOrdenPendiente && orden?.estado === 'pendiente') return;
   ordenActual = orden;
   if (!ordenActual) { location.hash = '#/'; return; }
   const o = ordenActual;
 
   $('#orden-datos').innerHTML = `
-    <h2>${escapar(o.folio)} <span class="estado ${o.estado}">${o.estado}</span></h2>
+    <h2>${escapar(o.folio)} <span class="estado ${o.estado}">${o.estado}</span>${o.porEnviar ? ' <span class="estado por-enviar">por enviar</span>' : ''}</h2>
     <dl>
       <dt>Cliente</dt><dd>${escapar(o.cliente_nombre)} (${TIPOS_CLIENTE[o.tipo_cliente] || ''})</dd>
       <dt>Teléfono</dt><dd>${escapar(o.cliente_telefono || '—')}</dd>
@@ -252,3 +260,23 @@ $('#form-completar').addEventListener('submit', async (e) => {
 
 window.addEventListener('hashchange', rutear);
 rutear();
+
+function actualizarAvisoConexion() {
+  $('#aviso-offline').classList.toggle('oculto', navigator.onLine);
+}
+
+window.addEventListener('online', async () => {
+  actualizarAvisoConexion();
+  await datos.sincronizar?.();
+  rutear();
+});
+window.addEventListener('offline', actualizarAvisoConexion);
+actualizarAvisoConexion();
+
+// Al arrancar la app también se reenvía lo encolado (p. ej. si la señal volvió
+// con la app cerrada); en modo demo `sincronizar` es undefined y no hace nada.
+datos.sincronizar?.();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.error(err));
+}
