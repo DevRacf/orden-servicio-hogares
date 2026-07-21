@@ -379,8 +379,11 @@ export async function sincronizar() {
   if (sincronizando || !navigator.onLine) return;
   sincronizando = true;
   try {
-    let cola = leerCola();
-    for (const item of [...cola]) {
+    // Se recorre una foto de los pendientes al empezar, pero cada escritura
+    // relee la cola justo antes de guardar (no arrastra la foto vieja) — así
+    // no se pierde un cierre que completarOrden() haya agregado en paralelo
+    // mientras esta sincronización seguía en curso.
+    for (const item of [...leerCola()]) {
       try {
         // Se manda la fecha real de cierre (cuando el técnico terminó, no
         // cuando volvió la señal) para que datos-supabase.js la respete.
@@ -388,8 +391,7 @@ export async function sincronizar() {
           ...item.cierre,
           completed_at: new Date(item.timestamp).toISOString()
         }));
-        cola = quitarDeCola(cola, item.ordenId);
-        guardarCola(cola);
+        guardarCola(quitarDeCola(leerCola(), item.ordenId));
       } catch (err) {
         console.error('No se pudo sincronizar el cierre de', item.ordenId, err);
         break;
@@ -443,6 +445,11 @@ export async function completarOrden(id, cierre) {
     orden = await conTiempoLimite(sb.completarOrden(id, cierre));
   } catch (err) {
     if (!esFalloDeRed(err)) throw err;
+    // Caso aceptado: si esto marcó "tiempo agotado" pero el guardado en el
+    // servidor en realidad sí llegó a completarse un instante después, se
+    // reenviará igual al sincronizar — mismos datos, misma orden, solo con
+    // completed_at unos segundos distinto al de la primera escritura. No hay
+    // pérdida de información del técnico ni del cliente, solo ese margen.
     const cola = agregarACola(leerCola(), id, cierre, Date.now());
     guardarCola(cola);
     const cache = leerCache() || [];
@@ -859,26 +866,54 @@ window.fetch = (...args) => {
    orden está completada (verificar vía la propia app recargando la lista).
 8. Consola: solo el `console.error` esperado de los intentos sin red, nada más.
 
-- [ ] **Step 3: Letrero de sin conexión**
+- [ ] **Step 3: Simulacro de señal lenta (no caída total) al completar con firmas**
+
+El escenario más realista en campo no es una desconexión limpia sino una señal débil
+que deja la petición colgada. Verificar que el límite de 8 segundos
+(`conTiempoLimite` en `js/offline.js`) no se dispare antes de tiempo con el payload más
+pesado de la app: dos firmas.
+
+1. Con red normal, abrir una orden pendiente y llenar trabajo + ambas firmas.
+2. Antes de guardar, con `javascript_tool` retrasar (no cortar) las peticiones a
+   Supabase 5 segundos:
+
+```js
+window.fetchOriginal = window.fetchOriginal || window.fetch;
+window.fetch = (...args) => {
+  const url = String(args[0]?.url || args[0]);
+  if (!url.includes('supabase.co')) return window.fetchOriginal(...args);
+  return new Promise(resolve => setTimeout(() => resolve(window.fetchOriginal(...args)), 5000));
+};
+```
+
+3. Guardar el cierre: debe completarse con éxito (una demora de 5s, por debajo del
+   límite de 8s, no debe activar el respaldo offline).
+4. Restaurar `window.fetch = window.fetchOriginal`.
+5. Si en uso real se ve que 8s es insuficiente para firmas con señal verdaderamente
+   mala, ajustar el límite solo en las llamadas de `completarOrden` en `js/offline.js`
+   (no en `listarOrdenes`/`obtenerOrden`, que no cargan firmas) — no es necesario
+   resolverlo en esta verificación si el margen de 5s ya pasa.
+
+- [ ] **Step 4: Letrero de sin conexión**
 
 `window.dispatchEvent(new Event('offline'))` → aparece el letrero;
 `new Event('online')` → desaparece. (El evento sintético no cambia `navigator.onLine`,
 así que verificar el letrero con los eventos y aceptar que `navigator.onLine` real siga
 true.)
 
-- [ ] **Step 4: Prueba real del service worker**
+- [ ] **Step 5: Prueba real del service worker**
 
 1. Con la app cargada y el SW activo, **detener** el servidor local
    (`pkill -f "http.server 8123"`).
 2. Recargar la página completa (F5/navigate): la app debe abrir desde la caché del SW.
 3. Reiniciar el servidor para las siguientes pruebas.
 
-- [ ] **Step 5: Regresión general (escritorio y 375px)**
+- [ ] **Step 6: Regresión general (escritorio y 375px)**
 
 Flujo normal con red: lista, buscador, crear orden con servicios, completar con firmas,
 PDF con marca de agua, sin desbordes horizontales en 375px, consola limpia.
 
-- [ ] **Step 6: Commit de correcciones (solo si hubo)**
+- [ ] **Step 7: Commit de correcciones (solo si hubo)**
 
 ```bash
 git add -A

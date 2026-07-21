@@ -40,8 +40,11 @@ export async function sincronizar() {
   if (sincronizando || !navigator.onLine) return;
   sincronizando = true;
   try {
-    let cola = leerCola();
-    for (const item of [...cola]) {
+    // Se recorre una foto de los pendientes al empezar, pero cada escritura
+    // relee la cola justo antes de guardar (no arrastra la foto vieja) — así
+    // no se pierde un cierre que completarOrden() haya agregado en paralelo
+    // mientras esta sincronización seguía en curso.
+    for (const item of [...leerCola()]) {
       try {
         // Se manda la fecha real de cierre (cuando el técnico terminó, no
         // cuando volvió la señal) para que datos-supabase.js la respete.
@@ -49,8 +52,7 @@ export async function sincronizar() {
           ...item.cierre,
           completed_at: new Date(item.timestamp).toISOString()
         }));
-        cola = quitarDeCola(cola, item.ordenId);
-        guardarCola(cola);
+        guardarCola(quitarDeCola(leerCola(), item.ordenId));
       } catch (err) {
         console.error('No se pudo sincronizar el cierre de', item.ordenId, err);
         break;
@@ -104,6 +106,11 @@ export async function completarOrden(id, cierre) {
     orden = await conTiempoLimite(sb.completarOrden(id, cierre));
   } catch (err) {
     if (!esFalloDeRed(err)) throw err;
+    // Caso aceptado: si esto marcó "tiempo agotado" pero el guardado en el
+    // servidor en realidad sí llegó a completarse un instante después, se
+    // reenviará igual al sincronizar — mismos datos, misma orden, solo con
+    // completed_at unos segundos distinto al de la primera escritura. No hay
+    // pérdida de información del técnico ni del cliente, solo ese margen.
     const cola = agregarACola(leerCola(), id, cierre, Date.now());
     guardarCola(cola);
     const cache = leerCache() || [];
