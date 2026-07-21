@@ -24,13 +24,23 @@ function bloqueTexto(doc, titulo, texto, y, margen, ancho) {
   return y + lineas.length * 5 + 6;
 }
 
-// Marca de agua: logo centrado y tenue detrás del contenido de cada página.
+const DOMICILIO_MARCA = ['Av. Los Pinos 500-A', 'Fracc. Los Pinos', 'Zapopan'];
+
+// Marca de agua: logo y domicilio centrados y tenues detrás del contenido de cada página.
 function marcaDeAgua(doc) {
   const ANCHO_MARCA = 120;
   const altoMarca = ANCHO_MARCA * (LOGO_ALTO / LOGO_ANCHO);
+  const yLogo = (279 - altoMarca) / 2;
   doc.saveGraphicsState();
   doc.setGState(new doc.GState({ opacity: 0.1 }));
-  doc.addImage(LOGO_DATAURL, 'PNG', (216 - ANCHO_MARCA) / 2, (279 - altoMarca) / 2, ANCHO_MARCA, altoMarca);
+  doc.addImage(LOGO_DATAURL, 'PNG', (216 - ANCHO_MARCA) / 2, yLogo, ANCHO_MARCA, altoMarca);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  let yTexto = yLogo + altoMarca + 8;
+  for (const linea of DOMICILIO_MARCA) {
+    doc.text(linea, 108, yTexto, { align: 'center' });
+    yTexto += 5;
+  }
   doc.restoreGraphicsState();
 }
 
