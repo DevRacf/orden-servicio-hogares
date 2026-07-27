@@ -10,17 +10,38 @@ function obtenerCliente() {
 }
 
 export async function iniciarSesion(clave) {
-  const { error } = await obtenerCliente().auth.signInWithPassword({
+  const intentoOficina = await obtenerCliente().auth.signInWithPassword({
     email: CONFIG.LOGIN_EMAIL,
     password: clave
   });
-  if (error) return { ok: false, error: 'Clave incorrecta' };
-  return { ok: true };
+  if (!intentoOficina.error) return { ok: true };
+
+  const intentoTecnico = await obtenerCliente().auth.signInWithPassword({
+    email: CONFIG.LOGIN_EMAIL_TECNICOS,
+    password: clave
+  });
+  if (!intentoTecnico.error) return { ok: true };
+
+  return { ok: false, error: 'Clave incorrecta' };
 }
 
 export async function haySesion() {
   const { data } = await obtenerCliente().auth.getSession();
   return Boolean(data.session);
+}
+
+export async function obtenerRol() {
+  const { data: sesion } = await obtenerCliente().auth.getSession();
+  const uid = sesion.session?.user?.id;
+  if (!uid) return 'tecnico';
+  const { data, error } = await obtenerCliente()
+    .from('perfiles').select('rol').eq('id', uid).maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    console.error('Sin perfil para la cuenta activa; se asume rol de técnico por seguridad.');
+    return 'tecnico';
+  }
+  return data.rol;
 }
 
 export async function cerrarSesion() {
@@ -56,12 +77,14 @@ export async function crearOrden(datos) {
 }
 
 export async function completarOrden(id, cierre) {
-  const { data, error } = await obtenerCliente()
-    .from('ordenes')
-    .update({ ...cierre, estado: 'completada', completed_at: cierre.completed_at || new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+  const { data, error } = await obtenerCliente().rpc('completar_orden', {
+    p_id: id,
+    p_trabajo_realizado: cierre.trabajo_realizado,
+    p_materiales: cierre.materiales,
+    p_firma_tecnico: cierre.firma_tecnico,
+    p_firma_cliente: cierre.firma_cliente,
+    p_completed_at: cierre.completed_at || new Date().toISOString()
+  });
   if (error) throw error;
   return data;
 }
