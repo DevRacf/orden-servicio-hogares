@@ -71,3 +71,8 @@ export async function completarOrden(id, cierre) {
   guardarOrdenes(ordenes);
   return orden;
 }
+
+// El modo demo es solo para desarrollo local; siempre acceso completo.
+export async function obtenerRol() {
+  return 'oficina';
+}

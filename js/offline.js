@@ -142,4 +142,4 @@ export async function completarOrden(id, cierre) {
   return orden;
 }
 
-export const { iniciarSesion, haySesion, cerrarSesion, listarTecnicos, crearOrden } = sb;
+export const { iniciarSesion, haySesion, cerrarSesion, listarTecnicos, crearOrden, obtenerRol } = sb;
