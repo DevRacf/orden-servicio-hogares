@@ -142,4 +142,14 @@ export async function completarOrden(id, cierre) {
   return orden;
 }
 
-export const { iniciarSesion, haySesion, cerrarSesion, listarTecnicos, crearOrden, obtenerRol } = sb;
+export async function obtenerRol() {
+  try {
+    return await conTiempoLimite(sb.obtenerRol());
+  } catch (err) {
+    if (!esFalloDeRed(err)) throw err;
+    avisarFalloDeRed();
+    return 'tecnico'; // por seguridad: ante la duda, el lado restrictivo
+  }
+}
+
+export const { iniciarSesion, haySesion, cerrarSesion, listarTecnicos, crearOrden } = sb;
