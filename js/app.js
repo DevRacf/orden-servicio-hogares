@@ -12,6 +12,7 @@ const $ = (sel) => document.querySelector(sel);
 let ordenActual = null;
 let pads = null;
 let ordenesCargadas = [];
+let rolActual = null;
 
 function filaMaterial() {
   const div = document.createElement('div');
@@ -49,17 +50,40 @@ function navegar(hash) {
   else location.hash = hash;
 }
 
+async function obtenerRolCacheado() {
+  if (rolActual === null) rolActual = await datos.obtenerRol();
+  return rolActual;
+}
+
+function actualizarVisibilidadPorRol() {
+  $('#link-nueva-orden').classList.toggle('oculto', rolActual === 'tecnico');
+}
+
 async function rutear() {
   try {
     if (!(await datos.haySesion())) {
       $('#btn-salir').classList.add('oculto');
       mostrarVista('vista-login');
+      rolActual = null; // se vuelve a resolver en el siguiente login
       return;
     }
     $('#btn-salir').classList.remove('oculto');
     const hash = location.hash || '#/';
+    if (hash === '#/nueva') {
+      // Crear órdenes ya requería internet antes de este cambio (igual que
+      // iniciar sesión); esperar el rol aquí no le quita nada al modo offline,
+      // que solo cubre ver/completar órdenes ya cargadas.
+      await obtenerRolCacheado();
+      actualizarVisibilidadPorRol();
+      if (rolActual === 'tecnico') { location.hash = '#/'; return; }
+      await renderNueva();
+      return;
+    }
+    // Para las demás rutas no se espera: no debe bloquear la navegación ni
+    // romper el modo sin internet si todavía no hay red para resolver el rol.
+    // Si falla, se reintenta solo en la siguiente llamada a rutear().
+    obtenerRolCacheado().then(actualizarVisibilidadPorRol).catch(err => console.error(err));
     const m = hash.match(/^#\/orden\/(.+)$/);
-    if (hash === '#/nueva') { await renderNueva(); return; }
     if (m) { await renderOrden(m[1]); return; }
     await renderLista();
   } catch (err) {
