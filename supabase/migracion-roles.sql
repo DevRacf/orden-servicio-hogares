@@ -71,6 +71,7 @@ begin
 end;
 $$;
 
+revoke execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz) from public;
 grant execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz) to authenticated;
 
 -- PASO 2 — correr esto DESPUÉS de crear la cuenta de técnicos en
