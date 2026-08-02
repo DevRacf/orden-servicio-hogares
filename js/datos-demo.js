@@ -60,6 +60,15 @@ export async function crearOrden(datos) {
   return orden;
 }
 
+export async function actualizarOrden(id, cambios) {
+  const ordenes = leerOrdenes();
+  const orden = ordenes.find(o => o.id === id);
+  if (!orden || orden.estado !== 'pendiente') throw new Error('Orden no encontrada o ya completada');
+  Object.assign(orden, cambios);
+  guardarOrdenes(ordenes);
+  return orden;
+}
+
 export async function completarOrden(id, cierre) {
   const ordenes = leerOrdenes();
   const orden = ordenes.find(o => o.id === id);

@@ -102,6 +102,66 @@
     <section id="vista-orden" class="vista oculto">
       <a href="#/" class="volver">← Órdenes</a>
       <div id="orden-datos"></div>
+      <button id="btn-editar-orden" class="oculto liga" type="button">Editar orden</button>
+      <form id="form-editar" class="oculto">
+        <h3>Editar orden</h3>
+        <label>Nombre del cliente
+          <input name="cliente_nombre" required>
+        </label>
+        <label>Teléfono
+          <input name="cliente_telefono" type="tel">
+        </label>
+        <label>Dirección
+          <textarea name="cliente_direccion" rows="2" required></textarea>
+        </label>
+        <label>Tipo de cliente
+          <select name="tipo_cliente">
+            <option value="hogar">Hogar</option>
+            <option value="empresa">Empresa</option>
+          </select>
+        </label>
+        <fieldset class="servicios-campo">
+          <legend>Servicios solicitados</legend>
+          <div class="chips">
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="camaras">
+              <span>Cámaras</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="audio">
+              <span>Audio</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="internet">
+              <span>Internet</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="pantallas">
+              <span>Pantallas</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="mantenimiento">
+              <span>Mantenimiento</span>
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="servicios" value="otro">
+              <span>Otro</span>
+            </label>
+          </div>
+        </fieldset>
+        <label>Descripción de lo solicitado
+          <textarea name="descripcion" rows="3"></textarea>
+        </label>
+        <label>Técnico asignado
+          <select name="tecnico" id="select-tecnico-editar"></select>
+        </label>
+        <h3>Materiales y equipos</h3>
+        <div id="filas-materiales-editar"></div>
+        <button type="button" id="btn-agregar-material-editar" class="liga">+ Agregar material</button>
+        <p id="error-editar" class="error oculto"></p>
+        <button type="submit">Guardar cambios</button>
+        <button type="button" id="btn-cancelar-editar" class="liga">Cancelar</button>
+      </form>
       <form id="form-completar" class="oculto">
         <h3>Trabajo realizado</h3>
         <textarea id="trabajo-realizado" rows="4"

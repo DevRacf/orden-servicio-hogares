@@ -14,15 +14,26 @@ let pads = null;
 let ordenesCargadas = [];
 let rolActual = null;
 
-function filaMaterial() {
+function filaMaterial(material) {
   const div = document.createElement('div');
   div.className = 'fila-material';
   div.innerHTML = `
     <input type="number" min="1" class="cantidad" placeholder="Cant.">
     <input type="text" class="descripcion" placeholder="Descripción / modelo">
     <button type="button" class="quitar" aria-label="Quitar fila">×</button>`;
+  if (material) {
+    div.querySelector('.cantidad').value = material.cantidad ?? '';
+    div.querySelector('.descripcion').value = material.descripcion ?? '';
+  }
   div.querySelector('.quitar').addEventListener('click', () => div.remove());
   return div;
+}
+
+// Precarga las filas con los materiales ya guardados (p. ej. los que la
+// oficina agregó mientras la orden seguía pendiente); si no hay ninguno,
+// una fila vacía para empezar.
+function filasMateriales(lista) {
+  return (lista && lista.length ? lista : [null]).map(filaMaterial);
 }
 
 const VISTAS = ['vista-login', 'vista-lista', 'vista-nueva', 'vista-orden'];
@@ -57,6 +68,9 @@ async function obtenerRolCacheado() {
 
 function actualizarVisibilidadPorRol() {
   $('#link-nueva-orden').classList.toggle('oculto', rolActual === 'tecnico');
+  const puedeEditar = ordenActual?.estado === 'pendiente' && rolActual === 'oficina'
+    && $('#form-editar').classList.contains('oculto');
+  $('#btn-editar-orden').classList.toggle('oculto', !puedeEditar);
 }
 
 async function rutear() {
@@ -145,12 +159,15 @@ async function renderNueva() {
     tecnicos.map(t => `<option>${escapar(t)}</option>`).join('');
 }
 
-async function renderOrden(id) {
+async function renderOrden(id, forzar = false) {
   // Si ya se estaba viendo esta misma orden pendiente (p. ej. una reconexión en
   // segundo plano volvió a llamar rutear()), no se reconstruye el formulario:
   // perdería el trabajo/materiales ya escritos y destruiría los pads de firma
-  // con lo que ya se hubiera firmado, incluida la firma del cliente.
-  const yaEnEstaOrdenPendiente = !document.getElementById('vista-orden').classList.contains('oculto')
+  // con lo que ya se hubiera firmado, incluida la firma del cliente. `forzar`
+  // se usa tras guardar una edición de oficina, donde sí queremos reconstruir
+  // todo con los datos recién guardados.
+  const yaEnEstaOrdenPendiente = !forzar
+    && !document.getElementById('vista-orden').classList.contains('oculto')
     && ordenActual?.id === id
     && ordenActual?.estado === 'pendiente';
   mostrarVista('vista-orden');
@@ -190,16 +207,18 @@ async function renderOrden(id) {
 
   const esPendiente = o.estado === 'pendiente';
   $('#form-completar').classList.toggle('oculto', !esPendiente);
+  $('#form-editar').classList.add('oculto');
   $('#btn-pdf').classList.toggle('oculto', esPendiente);
 
   if (esPendiente) {
     $('#trabajo-realizado').value = '';
-    $('#filas-materiales').replaceChildren(filaMaterial());
+    $('#filas-materiales').replaceChildren(...filasMateriales(o.materiales));
     pads = {
       tecnico: crearPad(document.getElementById('firma-tecnico')),
       cliente: crearPad(document.getElementById('firma-cliente'))
     };
   }
+  actualizarVisibilidadPorRol();
 }
 
 $('#form-login').addEventListener('submit', async (e) => {
@@ -243,6 +262,65 @@ $('#form-nueva').addEventListener('submit', async (e) => {
 
 $('#btn-agregar-material').addEventListener('click', () => {
   $('#filas-materiales').appendChild(filaMaterial());
+});
+
+$('#btn-editar-orden').addEventListener('click', async () => {
+  const o = ordenActual;
+  const form = $('#form-editar');
+  form.cliente_nombre.value = o.cliente_nombre;
+  form.cliente_telefono.value = o.cliente_telefono || '';
+  form.cliente_direccion.value = o.cliente_direccion;
+  form.tipo_cliente.value = o.tipo_cliente;
+  form.querySelectorAll('input[name="servicios"]').forEach(c => {
+    c.checked = o.servicios.includes(c.value);
+  });
+  form.descripcion.value = o.descripcion || '';
+  const tecnicos = new Set(await datos.listarTecnicos());
+  tecnicos.add(o.tecnico); // por si el técnico asignado ya no está activo
+  $('#select-tecnico-editar').innerHTML = [...tecnicos]
+    .map(t => `<option ${t === o.tecnico ? 'selected' : ''}>${escapar(t)}</option>`).join('');
+  $('#filas-materiales-editar').replaceChildren(...filasMateriales(o.materiales));
+  limpiarError('error-editar');
+  $('#form-completar').classList.add('oculto');
+  form.classList.remove('oculto');
+  actualizarVisibilidadPorRol();
+});
+
+$('#btn-cancelar-editar').addEventListener('click', () => {
+  $('#form-editar').classList.add('oculto');
+  $('#form-completar').classList.toggle('oculto', ordenActual.estado !== 'pendiente');
+  actualizarVisibilidadPorRol();
+});
+
+$('#btn-agregar-material-editar').addEventListener('click', () => {
+  $('#filas-materiales-editar').appendChild(filaMaterial());
+});
+
+$('#form-editar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const d = Object.fromEntries(form);
+  d.servicios = form.getAll('servicios');
+  const v = validarNuevaOrden(d);
+  if (!v.ok) return mostrarError('error-editar', v.errores);
+  limpiarError('error-editar');
+  const filas = [...document.querySelectorAll('#filas-materiales-editar .fila-material')].map(f => ({
+    cantidad: f.querySelector('.cantidad').value,
+    descripcion: f.querySelector('.descripcion').value
+  }));
+  d.materiales = limpiarMateriales(filas);
+  const boton = e.target.querySelector('button[type="submit"]');
+  boton.disabled = true;
+  let ordenActualizada;
+  try {
+    ordenActualizada = await datos.actualizarOrden(ordenActual.id, d);
+  } catch {
+    return mostrarError('error-editar', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  } finally {
+    boton.disabled = false;
+  }
+  ordenActual = ordenActualizada;
+  await renderOrden(ordenActual.id, true);
 });
 
 document.querySelectorAll('[data-limpia]').forEach(b =>
