@@ -1,5 +1,6 @@
 import { TIPOS_CLIENTE, formatearFecha, etiquetasServicios } from './ordenes.js';
 import { LOGO_DATAURL, LOGO_ANCHO, LOGO_ALTO } from './logo.js';
+import { WHATSAPP_ICONO_DATAURL, WHATSAPP_ICONO_ANCHO, WHATSAPP_ICONO_ALTO } from './whatsapp-icono.js';
 
 const WHATSAPP_NUMERO = '3314259040';
 
@@ -84,11 +85,18 @@ export function generarPdf(orden) {
   doc.setFontSize(10);
   doc.text('Orden de servicio — cámaras, audio, internet y pantallas', MARGEN, y);
   y += 5;
-  doc.setTextColor(217, 118, 6);
-  doc.textWithLink(`WhatsApp: ${formatearWhatsapp(WHATSAPP_NUMERO)}`, MARGEN, y, {
+
+  const VERDE_WHATSAPP = [37, 211, 102];
+  const ICONO_ALTO = 4.5;
+  const ICONO_ANCHO = ICONO_ALTO * (WHATSAPP_ICONO_ANCHO / WHATSAPP_ICONO_ALTO);
+  const textoWhatsapp = formatearWhatsapp(WHATSAPP_NUMERO);
+  doc.addImage(WHATSAPP_ICONO_DATAURL, 'PNG', MARGEN, y - ICONO_ALTO + 1, ICONO_ANCHO, ICONO_ALTO);
+  doc.setTextColor(...VERDE_WHATSAPP);
+  doc.text(textoWhatsapp, MARGEN + ICONO_ANCHO + 1.5, y);
+  doc.setTextColor(0, 0, 0);
+  doc.link(MARGEN, y - ICONO_ALTO + 1, ICONO_ANCHO + 1.5 + doc.getTextWidth(textoWhatsapp), ICONO_ALTO, {
     url: enlaceWhatsapp(WHATSAPP_NUMERO)
   });
-  doc.setTextColor(0, 0, 0);
   y += 4;
   doc.line(MARGEN, y, DERECHA, y);
   y += 9;
