@@ -197,6 +197,8 @@ async function renderOrden(id, forzar = false) {
       <dt>Trabajo realizado</dt><dd>${escapar(o.trabajo_realizado)}</dd>
       <dt>Materiales</dt><dd>${(o.materiales || [])
         .map(m => `${m.cantidad} × ${escapar(m.descripcion)}`).join('<br>') || '—'}</dd>
+      <dt>Materiales y equipo del cliente</dt><dd>${(o.materiales_cliente || [])
+        .map(m => `${m.cantidad} × ${escapar(m.descripcion)}`).join('<br>') || '—'}</dd>
       <dt>Cerrada</dt><dd>${formatearFecha(o.completed_at)}</dd>` : ''}
     </dl>`;
 
@@ -215,6 +217,7 @@ async function renderOrden(id, forzar = false) {
   if (esPendiente) {
     $('#trabajo-realizado').value = '';
     $('#filas-materiales').replaceChildren(...filasMateriales(o.materiales));
+    $('#filas-materiales-cliente').replaceChildren(...filasMateriales(o.materiales_cliente));
     pads = {
       tecnico: crearPad(document.getElementById('firma-tecnico')),
       cliente: crearPad(document.getElementById('firma-cliente'))
@@ -266,6 +269,10 @@ $('#btn-agregar-material').addEventListener('click', () => {
   $('#filas-materiales').appendChild(filaMaterial());
 });
 
+$('#btn-agregar-material-cliente').addEventListener('click', () => {
+  $('#filas-materiales-cliente').appendChild(filaMaterial());
+});
+
 $('#btn-editar-orden').addEventListener('click', async () => {
   const o = ordenActual;
   const form = $('#form-editar');
@@ -282,6 +289,7 @@ $('#btn-editar-orden').addEventListener('click', async () => {
   $('#select-tecnico-editar').innerHTML = [...tecnicos]
     .map(t => `<option ${t === o.tecnico ? 'selected' : ''}>${escapar(t)}</option>`).join('');
   $('#filas-materiales-editar').replaceChildren(...filasMateriales(o.materiales));
+  $('#filas-materiales-cliente-editar').replaceChildren(...filasMateriales(o.materiales_cliente));
   limpiarError('error-editar');
   $('#form-completar').classList.add('oculto');
   form.classList.remove('oculto');
@@ -298,6 +306,10 @@ $('#btn-agregar-material-editar').addEventListener('click', () => {
   $('#filas-materiales-editar').appendChild(filaMaterial());
 });
 
+$('#btn-agregar-material-cliente-editar').addEventListener('click', () => {
+  $('#filas-materiales-cliente-editar').appendChild(filaMaterial());
+});
+
 $('#form-editar').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
@@ -306,11 +318,12 @@ $('#form-editar').addEventListener('submit', async (e) => {
   const v = validarNuevaOrden(d);
   if (!v.ok) return mostrarError('error-editar', v.errores);
   limpiarError('error-editar');
-  const filas = [...document.querySelectorAll('#filas-materiales-editar .fila-material')].map(f => ({
+  const leerFilas = (contenedor) => [...document.querySelectorAll(`#${contenedor} .fila-material`)].map(f => ({
     cantidad: f.querySelector('.cantidad').value,
     descripcion: f.querySelector('.descripcion').value
   }));
-  d.materiales = limpiarMateriales(filas);
+  d.materiales = limpiarMateriales(leerFilas('filas-materiales-editar'));
+  d.materiales_cliente = limpiarMateriales(leerFilas('filas-materiales-cliente-editar'));
   const boton = e.target.querySelector('button[type="submit"]');
   boton.disabled = true;
   let ordenActualizada;
@@ -332,13 +345,14 @@ $('#btn-pdf').addEventListener('click', () => compartirPdf(ordenActual));
 
 $('#form-completar').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const filas = [...document.querySelectorAll('#filas-materiales .fila-material')].map(f => ({
+  const leerFilas = (contenedor) => [...document.querySelectorAll(`#${contenedor} .fila-material`)].map(f => ({
     cantidad: f.querySelector('.cantidad').value,
     descripcion: f.querySelector('.descripcion').value
   }));
   const cierre = {
     trabajo_realizado: $('#trabajo-realizado').value,
-    materiales: limpiarMateriales(filas),
+    materiales: limpiarMateriales(leerFilas('filas-materiales')),
+    materiales_cliente: limpiarMateriales(leerFilas('filas-materiales-cliente')),
     firma_tecnico: pads.tecnico.vacia() ? null : pads.tecnico.imagen(),
     firma_cliente: pads.cliente.vacia() ? null : pads.cliente.imagen()
   };

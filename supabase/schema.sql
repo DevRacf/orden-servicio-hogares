@@ -29,6 +29,10 @@ create table if not exists ordenes (
   tecnico text not null,
   trabajo_realizado text,
   materiales jsonb not null default '[]'::jsonb,
+  -- Equipo que el cliente ya tenía (comprado por su cuenta o reubicado desde
+  -- otro sitio) — se registra aparte de `materiales` porque no lo vendió ni
+  -- lo puso la empresa.
+  materiales_cliente jsonb not null default '[]'::jsonb,
   firma_tecnico text,
   firma_cliente text,
   completed_at timestamptz
@@ -73,7 +77,8 @@ create or replace function completar_orden(
   p_materiales jsonb,
   p_firma_tecnico text,
   p_firma_cliente text,
-  p_completed_at timestamptz
+  p_completed_at timestamptz,
+  p_materiales_cliente jsonb default '[]'::jsonb
 ) returns ordenes
 language plpgsql
 security definer
@@ -89,6 +94,7 @@ begin
   update ordenes set
     trabajo_realizado = p_trabajo_realizado,
     materiales = p_materiales,
+    materiales_cliente = p_materiales_cliente,
     firma_tecnico = p_firma_tecnico,
     firma_cliente = p_firma_cliente,
     estado = 'completada',
@@ -104,8 +110,8 @@ begin
 end;
 $$;
 
-revoke execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz) from public;
-grant execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz) to authenticated;
+revoke execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz, jsonb) from public;
+grant execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz, jsonb) to authenticated;
 
 -- Técnicos iniciales: edita los nombres reales aquí o después en Table Editor
 insert into tecnicos (nombre) values ('Técnico 1'), ('Técnico 2');

@@ -50,6 +50,7 @@ export async function crearOrden(datos) {
     created_at: new Date().toISOString(),
     trabajo_realizado: null,
     materiales: [],
+    materiales_cliente: [],
     firma_tecnico: null,
     firma_cliente: null,
     completed_at: null,

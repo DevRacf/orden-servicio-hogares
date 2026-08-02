@@ -42,9 +42,12 @@ main { max-width: 640px; margin: 0 auto; padding: 1rem; }
 
 .oculto { display: none !important; }
 
-h2, h3 { font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif; font-weight: 700; }
+h2, h3, h4 { font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif; font-weight: 700; }
 h2 { font-size: 1.2rem; margin: 1.2rem 0 0.6rem; }
 h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
+h4 { font-size: 0.92rem; margin: 1rem 0 0.2rem; color: var(--gris); }
+
+.ayuda { color: var(--gris); font-size: 0.82rem; margin: 0 0 0.5rem; }
 
 form label { display: block; margin-bottom: 0.9rem; font-weight: 600; font-size: 0.92rem; }
 

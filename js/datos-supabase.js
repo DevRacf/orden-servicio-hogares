@@ -91,6 +91,7 @@ export async function completarOrden(id, cierre) {
     p_id: id,
     p_trabajo_realizado: cierre.trabajo_realizado,
     p_materiales: cierre.materiales,
+    p_materiales_cliente: cierre.materiales_cliente,
     p_firma_tecnico: cierre.firma_tecnico,
     p_firma_cliente: cierre.firma_cliente,
     p_completed_at: cierre.completed_at || new Date().toISOString()

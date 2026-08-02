@@ -132,6 +132,23 @@ export function generarPdf(orden) {
     doc.text(`${m.cantidad} × ${m.descripcion}`, MARGEN, y);
     y += 6;
   }
+  y += 3;
+
+  saltarPaginaSiNecesario();
+  doc.setFont('helvetica', 'bold');
+  doc.text('Materiales y equipo del cliente', MARGEN, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  const materialesCliente = orden.materiales_cliente || [];
+  if (materialesCliente.length === 0) {
+    doc.text('—', MARGEN, y);
+    y += 6;
+  }
+  for (const m of materialesCliente) {
+    saltarPaginaSiNecesario();
+    doc.text(`${m.cantidad} × ${m.descripcion}`, MARGEN, y);
+    y += 6;
+  }
 
   // Firmas al pie (nueva página si el contenido bajó demasiado)
   if (y > 225) { doc.addPage(); marcaDeAgua(doc); y = 30; } else { y = Math.max(y + 10, 225); }
