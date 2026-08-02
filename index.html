@@ -36,6 +36,14 @@
       <div id="lista-pendientes"></div>
       <h2>Completadas</h2>
       <div id="lista-completadas"></div>
+      <div id="seccion-cobros" class="oculto">
+        <h2>Por cobrar</h2>
+        <div id="lista-por-cobrar"></div>
+        <h2>Cobradas</h2>
+        <div id="lista-cobradas"></div>
+        <h2>Pagadas</h2>
+        <div id="lista-pagadas"></div>
+      </div>
     </section>
 
     <!-- Vista: nueva orden -->
@@ -106,6 +114,16 @@
         <button id="btn-editar-orden" class="oculto boton-chico" type="button">Editar orden</button>
       </div>
       <div id="orden-datos"></div>
+      <div id="control-cobro" class="oculto">
+        <label>Estatus de cobro
+          <select id="select-estatus-cobro">
+            <option value="por_cobrar">Por cobrar</option>
+            <option value="cobrada">Cobrada</option>
+            <option value="pagada">Pagada</option>
+          </select>
+        </label>
+        <p id="error-cobro" class="error oculto"></p>
+      </div>
       <form id="form-editar" class="oculto">
         <h3>Editar orden</h3>
         <label>Nombre del cliente

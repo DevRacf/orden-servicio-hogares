@@ -7,7 +7,7 @@ const impl = CONFIG.MODO === 'supabase' ? offline : demo;
 export const {
   iniciarSesion, haySesion, cerrarSesion,
   listarTecnicos, listarOrdenes, obtenerOrden,
-  crearOrden, actualizarOrden, completarOrden, obtenerRol
+  crearOrden, actualizarOrden, actualizarEstatusCobro, completarOrden, obtenerRol
 } = impl;
 
 // Solo existe en modo supabase (reenvía cierres encolados); en demo queda undefined.

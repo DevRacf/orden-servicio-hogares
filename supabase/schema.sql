@@ -35,7 +35,11 @@ create table if not exists ordenes (
   materiales_cliente jsonb not null default '[]'::jsonb,
   firma_tecnico text,
   firma_cliente text,
-  completed_at timestamptz
+  completed_at timestamptz,
+  -- Solo tiene sentido una vez completada la orden; null mientras está
+  -- pendiente. Lo pone completar_orden() al cerrar y lo cambia oficina a
+  -- mano desde el detalle de la orden.
+  estatus_cobro text check (estatus_cobro in ('por_cobrar', 'cobrada', 'pagada'))
 );
 
 -- Un perfil por cada cuenta de Supabase Auth (oficina o técnicos), para saber
@@ -98,6 +102,7 @@ begin
     firma_tecnico = p_firma_tecnico,
     firma_cliente = p_firma_cliente,
     estado = 'completada',
+    estatus_cobro = 'por_cobrar',
     completed_at = coalesce(p_completed_at, now())
   where id = p_id and estado = 'pendiente'
   returning * into resultado;

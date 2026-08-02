@@ -68,9 +68,12 @@ async function obtenerRolCacheado() {
 
 function actualizarVisibilidadPorRol() {
   $('#link-nueva-orden').classList.toggle('oculto', rolActual === 'tecnico');
+  $('#seccion-cobros').classList.toggle('oculto', rolActual !== 'oficina');
   const puedeEditar = ordenActual?.estado === 'pendiente' && rolActual === 'oficina'
     && $('#form-editar').classList.contains('oculto');
   $('#btn-editar-orden').classList.toggle('oculto', !puedeEditar);
+  const puedeVerCobro = ordenActual?.estado === 'completada' && rolActual === 'oficina';
+  $('#control-cobro').classList.toggle('oculto', !puedeVerCobro);
 }
 
 async function rutear() {
@@ -128,11 +131,19 @@ function tarjetaOrden(o) {
 }
 
 function pintarListas(ordenes) {
-  const { pendientes, completadas } = ordenarParaLista(ordenes);
+  const { pendientes, completadas, porCobrar, cobradas, pagadas } = ordenarParaLista(ordenes);
   $('#lista-pendientes').innerHTML =
     pendientes.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pendientes</p>';
   $('#lista-completadas').innerHTML =
     completadas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes completadas</p>';
+  // Estas tres solo se ven (#seccion-cobros) si el rol es oficina, pero se
+  // llenan siempre — es más simple que duplicar pintarListas por rol.
+  $('#lista-por-cobrar').innerHTML =
+    porCobrar.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes por cobrar</p>';
+  $('#lista-cobradas').innerHTML =
+    cobradas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes cobradas</p>';
+  $('#lista-pagadas').innerHTML =
+    pagadas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pagadas</p>';
 }
 
 async function renderLista() {
@@ -222,6 +233,9 @@ async function renderOrden(id, forzar = false) {
       tecnico: crearPad(document.getElementById('firma-tecnico')),
       cliente: crearPad(document.getElementById('firma-cliente'))
     };
+  } else {
+    $('#select-estatus-cobro').value = o.estatus_cobro || 'por_cobrar';
+    limpiarError('error-cobro');
   }
   actualizarVisibilidadPorRol();
 }
@@ -336,6 +350,18 @@ $('#form-editar').addEventListener('submit', async (e) => {
   }
   ordenActual = ordenActualizada;
   await renderOrden(ordenActual.id, true);
+});
+
+$('#select-estatus-cobro').addEventListener('change', async (e) => {
+  const anterior = ordenActual.estatus_cobro || 'por_cobrar';
+  const nuevo = e.target.value;
+  limpiarError('error-cobro');
+  try {
+    ordenActual = await datos.actualizarEstatusCobro(ordenActual.id, nuevo);
+  } catch {
+    e.target.value = anterior;
+    return mostrarError('error-cobro', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  }
 });
 
 document.querySelectorAll('[data-limpia]').forEach(b =>

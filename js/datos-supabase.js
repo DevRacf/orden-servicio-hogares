@@ -86,6 +86,15 @@ export async function actualizarOrden(id, cambios) {
   return data;
 }
 
+// Solo oficina puede llamar esto (misma política RLS que actualizarOrden);
+// el filtro por estado evita marcar un cobro en una orden que aún no cierra.
+export async function actualizarEstatusCobro(id, estatusCobro) {
+  const { data, error } = await obtenerCliente()
+    .from('ordenes').update({ estatus_cobro: estatusCobro }).eq('id', id).eq('estado', 'completada').select().single();
+  if (error) throw error;
+  return data;
+}
+
 export async function completarOrden(id, cierre) {
   const { data, error } = await obtenerCliente().rpc('completar_orden', {
     p_id: id,

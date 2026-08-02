@@ -152,4 +152,7 @@ export async function obtenerRol() {
   }
 }
 
-export const { iniciarSesion, haySesion, cerrarSesion, listarTecnicos, crearOrden, actualizarOrden } = sb;
+export const {
+  iniciarSesion, haySesion, cerrarSesion, listarTecnicos,
+  crearOrden, actualizarOrden, actualizarEstatusCobro
+} = sb;
