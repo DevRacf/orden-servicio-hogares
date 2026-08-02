@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seccionesPdf } from '../js/pdf.js';
+import { seccionesPdf, enlaceWhatsapp } from '../js/pdf.js';
 
 const orden = {
   folio: 'OS-0007',
@@ -37,6 +37,10 @@ test('seccionesPdf junta un solo servicio sin coma de sobra', () => {
 test('seccionesPdf usa guion si no hay servicios', () => {
   const mapa = Object.fromEntries(seccionesPdf({ ...orden, servicios: [] }));
   assert.equal(mapa['Servicios'], '—');
+});
+
+test('enlaceWhatsapp arma un link wa.me con lada de México', () => {
+  assert.equal(enlaceWhatsapp('3314259040'), 'https://wa.me/523314259040');
 });
 
 test('el logo embebido es un PNG válido con dimensiones', async () => {

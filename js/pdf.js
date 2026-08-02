@@ -1,6 +1,19 @@
 import { TIPOS_CLIENTE, formatearFecha, etiquetasServicios } from './ordenes.js';
 import { LOGO_DATAURL, LOGO_ANCHO, LOGO_ALTO } from './logo.js';
 
+const WHATSAPP_NUMERO = '3314259040';
+
+// wa.me solo acepta el número completo con lada de país (52 = México), sin
+// espacios ni signos — de ahí el replace, por si el número se escribe con
+// guiones o espacios en el futuro.
+export function enlaceWhatsapp(numero) {
+  return `https://wa.me/52${numero.replace(/\D/g, '')}`;
+}
+
+function formatearWhatsapp(numero) {
+  return `${numero.slice(0, 2)} ${numero.slice(2, 6)} ${numero.slice(6)}`;
+}
+
 export function seccionesPdf(orden) {
   return [
     ['Cliente', orden.cliente_nombre],
@@ -70,6 +83,12 @@ export function generarPdf(orden) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.text('Orden de servicio — cámaras, audio, internet y pantallas', MARGEN, y);
+  y += 5;
+  doc.setTextColor(217, 118, 6);
+  doc.textWithLink(`WhatsApp: ${formatearWhatsapp(WHATSAPP_NUMERO)}`, MARGEN, y, {
+    url: enlaceWhatsapp(WHATSAPP_NUMERO)
+  });
+  doc.setTextColor(0, 0, 0);
   y += 4;
   doc.line(MARGEN, y, DERECHA, y);
   y += 9;
