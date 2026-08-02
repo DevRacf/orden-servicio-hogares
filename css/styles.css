@@ -91,6 +91,24 @@ button.liga {
 
 .encabezado .liga { color: var(--acento); }
 
+.encabezado-orden {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.encabezado-orden h2 { margin: 0.6rem 0; }
+
+.boton-chico {
+  width: auto;
+  min-height: auto;
+  flex: none;
+  padding: 0.55rem 0.9rem;
+  margin-top: 0;
+  font-size: 0.85rem;
+}
+
 .volver {
   display: inline-block;
   margin-bottom: 0.5rem;

@@ -181,8 +181,10 @@ async function renderOrden(id, forzar = false) {
   if (!ordenActual) { location.hash = '#/'; return; }
   const o = ordenActual;
 
+  $('#orden-titulo').innerHTML =
+    `<h2>${escapar(o.folio)} <span class="estado ${o.estado}">${o.estado}</span>${o.porEnviar ? ' <span class="estado por-enviar">por enviar</span>' : ''}</h2>`;
+
   $('#orden-datos').innerHTML = `
-    <h2>${escapar(o.folio)} <span class="estado ${o.estado}">${o.estado}</span>${o.porEnviar ? ' <span class="estado por-enviar">por enviar</span>' : ''}</h2>
     <dl>
       <dt>Cliente</dt><dd>${escapar(o.cliente_nombre)} (${TIPOS_CLIENTE[o.tipo_cliente] || ''})</dd>
       <dt>Teléfono</dt><dd>${escapar(o.cliente_telefono || '—')}</dd>
