@@ -69,6 +69,13 @@ create policy "actualizar ordenes solo oficina" on ordenes
     exists (select 1 from perfiles where id = auth.uid() and rol = 'oficina')
   );
 
+-- Solo completadas: una orden pendiente no se borra, se cierra o se deja así.
+create policy "borrar ordenes completadas solo oficina" on ordenes
+  for delete to authenticated using (
+    estado = 'completada'
+    and exists (select 1 from perfiles where id = auth.uid() and rol = 'oficina')
+  );
+
 create policy "leer mi propio perfil" on perfiles
   for select to authenticated using (auth.uid() = id);
 

@@ -74,6 +74,7 @@ function actualizarVisibilidadPorRol() {
   $('#btn-editar-orden').classList.toggle('oculto', !puedeEditar);
   const puedeVerCobro = ordenActual?.estado === 'completada' && rolActual === 'oficina';
   $('#control-cobro').classList.toggle('oculto', !puedeVerCobro);
+  $('#btn-eliminar-orden').classList.toggle('oculto', !puedeVerCobro);
 }
 
 async function rutear() {
@@ -373,6 +374,21 @@ document.querySelectorAll('[data-limpia]').forEach(b =>
   b.addEventListener('click', () => pads?.[b.dataset.limpia]?.limpiar()));
 
 $('#btn-pdf').addEventListener('click', () => compartirPdf(ordenActual));
+
+$('#btn-eliminar-orden').addEventListener('click', async () => {
+  const o = ordenActual;
+  limpiarError('error-eliminar');
+  if (!confirm(`¿Borrar la orden ${o.folio} de ${o.cliente_nombre}? Esto no se puede deshacer.`)) return;
+  const boton = $('#btn-eliminar-orden');
+  boton.disabled = true;
+  try {
+    await datos.eliminarOrden(o.id);
+  } catch {
+    boton.disabled = false;
+    return mostrarError('error-eliminar', 'No se pudo borrar. Revisa tu conexión e intenta de nuevo.');
+  }
+  navegar('#/');
+});
 
 $('#form-completar').addEventListener('submit', async (e) => {
   e.preventDefault();

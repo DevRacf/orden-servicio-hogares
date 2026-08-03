@@ -107,6 +107,8 @@ button.liga {
 
 .encabezado .liga { color: var(--acento); }
 
+button.liga.peligro { color: var(--rojo); }
+
 .encabezado-orden {
   display: flex;
   justify-content: space-between;

@@ -92,6 +92,13 @@ export async function actualizarEstatusCobro(id, estatusCobro) {
   return orden;
 }
 
+export async function eliminarOrden(id) {
+  const ordenes = leerOrdenes();
+  const orden = ordenes.find(o => o.id === id);
+  if (!orden || orden.estado !== 'completada') throw new Error('No se pudo borrar la orden');
+  guardarOrdenes(ordenes.filter(o => o.id !== id));
+}
+
 // El modo demo es solo para desarrollo local; siempre acceso completo.
 export async function obtenerRol() {
   return 'oficina';

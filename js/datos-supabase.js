@@ -95,6 +95,17 @@ export async function actualizarEstatusCobro(id, estatusCobro) {
   return data;
 }
 
+// Solo oficina puede borrar (política RLS "borrar ordenes completadas solo
+// oficina"), y solo si ya está completada — la propia política de Postgres
+// ya lo exige, el filtro aquí es nada más para dar un error claro si alguien
+// intenta borrar una pendiente en vez de un "0 filas" silencioso.
+export async function eliminarOrden(id) {
+  const { data, error } = await obtenerCliente()
+    .from('ordenes').delete().eq('id', id).eq('estado', 'completada').select();
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error('No se pudo borrar la orden');
+}
+
 export async function completarOrden(id, cierre) {
   const { data, error } = await obtenerCliente().rpc('completar_orden', {
     p_id: id,
