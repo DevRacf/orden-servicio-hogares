@@ -136,6 +136,8 @@ function pintarListas(ordenes) {
     pendientes.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pendientes</p>';
   $('#lista-completadas').innerHTML =
     completadas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes completadas</p>';
+  $('#cuenta-pendientes').textContent = pendientes.length;
+  $('#cuenta-completadas').textContent = completadas.length;
   // Estas tres solo se ven (#seccion-cobros) si el rol es oficina, pero se
   // llenan siempre — es más simple que duplicar pintarListas por rol.
   $('#lista-por-cobrar').innerHTML =

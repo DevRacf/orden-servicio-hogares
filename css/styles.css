@@ -242,6 +242,8 @@ canvas.firma {
 /* Tablero de cobros (solo oficina): cada estatus es un <details> — en
    móvil es un acordeón nativo (sin JS), en pantallas grandes se acomodan
    como columnas de kanban lado a lado. */
+#vista-lista > details.col-cobro { margin-bottom: 0.6rem; }
+
 .kanban-cobros { display: flex; flex-direction: column; gap: 0.6rem; }
 
 .col-cobro summary {
@@ -275,6 +277,8 @@ canvas.firma {
   border-radius: 99px;
 }
 
+.col-pendiente summary { background: var(--pendiente-fondo); color: var(--pendiente-texto); }
+.col-completada summary { background: var(--completada-fondo); color: var(--completada-texto); }
 .col-por-cobrar summary { background: var(--cobrar-fondo); color: var(--cobrar-texto); }
 .col-cobrada summary { background: var(--cobrada-fondo); color: var(--cobrada-texto); }
 .col-pagada summary { background: var(--pagada-fondo); color: var(--pagada-texto); }

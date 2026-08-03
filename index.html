@@ -32,10 +32,14 @@
     <section id="vista-lista" class="vista oculto">
       <a href="#/nueva" class="boton" id="link-nueva-orden">+ Nueva orden</a>
       <input type="search" id="buscador" aria-label="Buscar por cliente o folio" placeholder="Buscar por cliente o folio" autocomplete="off">
-      <h2>Pendientes</h2>
-      <div id="lista-pendientes"></div>
-      <h2>Completadas</h2>
-      <div id="lista-completadas"></div>
+      <details class="col-cobro col-pendiente" open>
+        <summary><span class="titulo-col">Pendientes</span><span class="cuenta" id="cuenta-pendientes">0</span></summary>
+        <div id="lista-pendientes" class="cuerpo-col"></div>
+      </details>
+      <details class="col-cobro col-completada" open>
+        <summary><span class="titulo-col">Completadas</span><span class="cuenta" id="cuenta-completadas">0</span></summary>
+        <div id="lista-completadas" class="cuerpo-col"></div>
+      </details>
       <div id="seccion-cobros" class="oculto">
         <h2>Cobros</h2>
         <div class="kanban-cobros">
