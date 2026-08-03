@@ -1,8 +1,9 @@
 import * as datos from './datos.js';
 import {
-  TIPOS_CLIENTE,
+  TIPOS_CLIENTE, TIPOS_SERVICIO,
   validarNuevaOrden, validarCierre, limpiarMateriales,
-  ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes
+  ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes,
+  calcularDashboard
 } from './ordenes.js';
 import { crearPad } from './firma.js';
 import { compartirPdf } from './pdf.js';
@@ -36,7 +37,7 @@ function filasMateriales(lista) {
   return (lista && lista.length ? lista : [null]).map(filaMaterial);
 }
 
-const VISTAS = ['vista-login', 'vista-lista', 'vista-nueva', 'vista-orden'];
+const VISTAS = ['vista-login', 'vista-lista', 'vista-nueva', 'vista-orden', 'vista-dashboard'];
 
 // Se guarda aquí (no en el historial del navegador) para poder restaurarlo
 // al volver a la lista con "← Órdenes" o con el botón atrás del celular.
@@ -74,6 +75,7 @@ async function obtenerRolCacheado() {
 
 function actualizarVisibilidadPorRol() {
   $('#link-nueva-orden').classList.toggle('oculto', rolActual === 'tecnico');
+  $('#link-dashboard').classList.toggle('oculto', rolActual !== 'oficina');
   $('#seccion-cobros').classList.toggle('oculto', rolActual !== 'oficina');
   const puedeEditar = ordenActual?.estado === 'pendiente' && rolActual === 'oficina'
     && $('#form-editar').classList.contains('oculto');
@@ -87,6 +89,7 @@ async function rutear() {
   try {
     if (!(await datos.haySesion())) {
       $('#btn-salir').classList.add('oculto');
+      $('#link-dashboard').classList.add('oculto');
       mostrarVista('vista-login');
       rolActual = null; // se vuelve a resolver en el siguiente login
       return;
@@ -101,6 +104,15 @@ async function rutear() {
       actualizarVisibilidadPorRol();
       if (rolActual === 'tecnico') { location.hash = '#/'; return; }
       await renderNueva();
+      return;
+    }
+    if (hash === '#/dashboard') {
+      // Solo oficina: igual que #/nueva, aquí sí esperamos el rol antes de
+      // mostrar nada.
+      await obtenerRolCacheado();
+      actualizarVisibilidadPorRol();
+      if (rolActual !== 'oficina') { location.hash = '#/'; return; }
+      await renderDashboard();
       return;
     }
     // Para las demás rutas no se espera: no debe bloquear la navegación ni
@@ -184,6 +196,115 @@ async function renderNueva() {
   if (location.hash !== hashEsperado) return;
   $('#select-tecnico').innerHTML =
     tecnicos.map(t => `<option>${escapar(t)}</option>`).join('');
+}
+
+let rangoDashboard = '30d';
+const ETIQUETAS_RANGO = { '7d': '7 días', '30d': '30 días', anio: 'este año' };
+const PALETA_DONA = ['var(--azul-2)', 'var(--acento)', '#7FB3C9', '#C9A6D9', 'var(--gris)', '#B5D99C'];
+
+function tendenciaTexto(actual, previo) {
+  if (previo === 0) return actual > 0 ? { texto: `▲ ${actual} nuevas`, clase: 'subio' } : { texto: 'Sin cambio', clase: 'neutral' };
+  const cambio = Math.round(((actual - previo) / previo) * 100);
+  if (cambio > 0) return { texto: `▲ ${cambio}% vs. periodo anterior`, clase: 'subio' };
+  if (cambio < 0) return { texto: `▼ ${Math.abs(cambio)}% vs. periodo anterior`, clase: 'bajo' };
+  return { texto: 'Sin cambio vs. periodo anterior', clase: 'neutral' };
+}
+
+function dona(items, etiquetas) {
+  if (!items.length) return '<p class="vacio">Sin datos en este periodo</p>';
+  let acumulado = 0;
+  const segmentos = items.map((it, i) => {
+    const color = PALETA_DONA[i % PALETA_DONA.length];
+    const desde = acumulado;
+    acumulado += it.pct;
+    return `${color} ${desde}% ${i === items.length - 1 ? 100 : acumulado}%`;
+  }).join(', ');
+  const leyenda = items.map((it, i) => `
+    <div class="leyenda-item">
+      <span class="punto" style="background:${PALETA_DONA[i % PALETA_DONA.length]}"></span>
+      <span class="etq">${escapar(etiquetas[it.clave] || it.clave)}</span>
+      <span class="pct">${it.pct}%</span>
+    </div>`).join('');
+  return `<div class="dona" style="--dona-grad: ${segmentos};"></div><div class="leyenda">${leyenda}</div>`;
+}
+
+function pintarDashboard() {
+  const d = calcularDashboard(ordenesCargadas, rangoDashboard);
+  const tendencia = tendenciaTexto(d.completadasPeriodo, d.completadasPeriodoPrevio);
+  const etiquetaPeriodo = ETIQUETAS_RANGO[rangoDashboard];
+
+  $('#franja-kpi').innerHTML = `
+    <div class="kpi pendiente">
+      <div class="num">${d.pendientes}</div>
+      <div class="etiqueta">Pendientes</div>
+      <div class="tendencia neutral">Órdenes por completar</div>
+    </div>
+    <div class="kpi completada">
+      <div class="num">${d.completadasPeriodo}</div>
+      <div class="etiqueta">Completadas (${etiquetaPeriodo})</div>
+      <div class="tendencia ${tendencia.clase}">${tendencia.texto}</div>
+    </div>
+    <div class="kpi cobrar">
+      <div class="num">${d.porCobrar}</div>
+      <div class="etiqueta">Por cobrar</div>
+      <div class="tendencia bajo">${d.porCobrar ? 'Necesitan seguimiento' : 'Al día'}</div>
+    </div>
+    <div class="kpi cobrada">
+      <div class="num">${d.cobradas}</div>
+      <div class="etiqueta">Cobradas, sin pagar</div>
+      <div class="tendencia neutral">En proceso</div>
+    </div>
+    <div class="kpi pagada">
+      <div class="num">${d.pagadas}</div>
+      <div class="etiqueta">Pagadas (histórico)</div>
+      <div class="tendencia neutral">Ciclo cerrado</div>
+    </div>
+    <div class="kpi total">
+      <div class="num">${d.total}</div>
+      <div class="etiqueta">Órdenes totales</div>
+      <div class="tendencia neutral">Desde el inicio</div>
+    </div>`;
+
+  const maxMes = Math.max(1, ...d.porMes.map(m => m.cuenta));
+  $('#barras-mensual').innerHTML = d.porMes.map((m, i) => `
+    <div class="barra-mes ${i === d.porMes.length - 1 ? 'actual' : ''}">
+      <div class="valor">${m.cuenta}</div>
+      <div class="col" style="height:${Math.max(6, Math.round((m.cuenta / maxMes) * 100))}%"></div>
+      <div class="mes">${m.etiqueta}</div>
+    </div>`).join('');
+
+  const maxTecnico = Math.max(1, ...d.porTecnico.map(t => t.cuenta));
+  $('#lista-tecnicos').innerHTML = d.porTecnico.length
+    ? d.porTecnico.map(t => `
+      <div class="fila-tecnico">
+        <span class="nombre">${escapar(t.nombre)}</span>
+        <div class="pista"><div class="relleno" style="width:${Math.round((t.cuenta / maxTecnico) * 100)}%"></div></div>
+        <span class="n">${t.cuenta}</span>
+      </div>`).join('')
+    : '<p class="vacio">Sin órdenes completadas en este periodo</p>';
+
+  $('#lista-cobrar-dashboard').innerHTML = d.porCobrarLista.length
+    ? d.porCobrarLista.map(o => {
+      const dias = Math.max(0, Math.floor((Date.now() - new Date(o.completed_at)) / 86400000));
+      return `
+        <div class="fila-cobrar">
+          <span><span class="cliente">${escapar(o.cliente_nombre)}</span><span class="folio">${escapar(o.folio)}</span></span>
+          <span class="dias ${dias > 5 ? 'viejo' : 'reciente'}">${dias} día${dias === 1 ? '' : 's'}</span>
+        </div>`;
+    }).join('')
+    : '<p class="vacio">No hay órdenes por cobrar</p>';
+
+  $('#dona-servicios').innerHTML = dona(d.servicios, TIPOS_SERVICIO);
+  $('#dona-tipo-cliente').innerHTML = dona(d.tipoCliente, TIPOS_CLIENTE);
+}
+
+async function renderDashboard() {
+  mostrarVista('vista-dashboard');
+  const hashEsperado = location.hash;
+  const ordenes = await datos.listarOrdenes();
+  if (location.hash !== hashEsperado) return;
+  ordenesCargadas = ordenes;
+  pintarDashboard();
 }
 
 async function renderOrden(id, forzar = false) {
@@ -272,6 +393,14 @@ $('#btn-salir').addEventListener('click', async () => {
 
 $('#buscador').addEventListener('input', () => {
   pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
+});
+
+$('#vista-dashboard .selector-rango').addEventListener('click', (e) => {
+  const boton = e.target.closest('.rango-boton');
+  if (!boton) return;
+  rangoDashboard = boton.dataset.rango;
+  document.querySelectorAll('#vista-dashboard .rango-boton').forEach(b => b.classList.toggle('activo', b === boton));
+  pintarDashboard();
 });
 
 $('#form-nueva').addEventListener('submit', async (e) => {

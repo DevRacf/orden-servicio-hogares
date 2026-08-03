@@ -12,7 +12,10 @@
 <body>
   <header class="encabezado">
     <h1 class="marca">Hogares Inteligentes</h1>
-    <button id="btn-salir" class="oculto liga" type="button">Salir</button>
+    <nav class="acciones-encabezado">
+      <a href="#/dashboard" id="link-dashboard" class="oculto liga">Panel</a>
+      <button id="btn-salir" class="oculto liga" type="button">Salir</button>
+    </nav>
   </header>
   <div id="aviso-offline" class="aviso-offline oculto">Sin conexión — los cierres se guardarán y enviarán solos</div>
 
@@ -55,6 +58,53 @@
             <summary><span class="titulo-col">Pagadas</span><span class="cuenta" id="cuenta-pagadas">0</span></summary>
             <div id="lista-pagadas" class="cuerpo-col"></div>
           </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vista: panel de oficina -->
+    <section id="vista-dashboard" class="vista oculto">
+      <a href="#/" class="volver">← Órdenes</a>
+      <div class="encabezado-orden">
+        <h2>Panel de oficina</h2>
+        <div class="selector-rango" role="group" aria-label="Rango de tiempo">
+          <button type="button" data-rango="7d" class="rango-boton">7 días</button>
+          <button type="button" data-rango="30d" class="rango-boton activo">30 días</button>
+          <button type="button" data-rango="anio" class="rango-boton">Este año</button>
+        </div>
+      </div>
+
+      <div class="franja-kpi" id="franja-kpi"></div>
+
+      <div class="rejilla-dashboard">
+        <div class="columna">
+          <div class="panel">
+            <h3>Órdenes por mes</h3>
+            <p class="pie-panel">Creadas cada mes, últimos 6 meses</p>
+            <div class="barras" id="barras-mensual"></div>
+          </div>
+          <div class="panel">
+            <h3>Carga por técnico</h3>
+            <p class="pie-panel">Órdenes completadas en el periodo</p>
+            <div id="lista-tecnicos"></div>
+          </div>
+          <div class="panel">
+            <h3>Por cobrar ahora</h3>
+            <p class="pie-panel">Completadas sin pago, de más antigua a más reciente</p>
+            <div class="lista-cobrar" id="lista-cobrar-dashboard"></div>
+          </div>
+        </div>
+        <div class="columna">
+          <div class="panel">
+            <h3>Servicios más solicitados</h3>
+            <p class="pie-panel">Órdenes creadas en el periodo</p>
+            <div class="fila-dona" id="dona-servicios"></div>
+          </div>
+          <div class="panel">
+            <h3>Hogar vs. empresa</h3>
+            <p class="pie-panel">Órdenes creadas en el periodo</p>
+            <div class="fila-dona" id="dona-tipo-cliente"></div>
+          </div>
         </div>
       </div>
     </section>

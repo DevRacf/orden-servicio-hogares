@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {
   TIPOS_SERVICIO, TIPOS_CLIENTE,
   validarNuevaOrden, limpiarMateriales, validarCierre,
-  ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes
+  ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes,
+  calcularDashboard
 } from '../js/ordenes.js';
 
 test('validarNuevaOrden acepta una orden completa', () => {
@@ -109,6 +110,79 @@ test('las etiquetas cubren todos los valores del esquema', () => {
   assert.deepEqual(Object.keys(TIPOS_SERVICIO),
     ['camaras', 'audio', 'internet', 'pantallas', 'mantenimiento', 'otro']);
   assert.deepEqual(Object.keys(TIPOS_CLIENTE), ['hogar', 'empresa']);
+});
+
+test('calcularDashboard junta las cifras del panel de oficina', () => {
+  const ahora = new Date('2026-08-15T12:00:00Z');
+  const ordenes = [
+    { id: 'p1', estado: 'pendiente', created_at: '2026-08-10T10:00:00Z' },
+    { id: 'p2', estado: 'pendiente', created_at: '2026-08-12T10:00:00Z' },
+    {
+      id: 'c1', estado: 'completada', created_at: '2026-08-01T10:00:00Z', completed_at: '2026-08-05T10:00:00Z',
+      estatus_cobro: 'por_cobrar', tecnico: 'Ana', servicios: ['camaras'], tipo_cliente: 'hogar'
+    },
+    {
+      id: 'c2', estado: 'completada', created_at: '2026-08-02T10:00:00Z', completed_at: '2026-08-06T10:00:00Z',
+      estatus_cobro: 'cobrada', tecnico: 'Ana', servicios: ['audio'], tipo_cliente: 'empresa'
+    },
+    {
+      id: 'c3', estado: 'completada', created_at: '2026-08-03T10:00:00Z', completed_at: '2026-08-07T10:00:00Z',
+      estatus_cobro: 'pagada', tecnico: 'Beto', servicios: ['camaras', 'internet'], tipo_cliente: 'hogar'
+    },
+    {
+      // fuera del periodo de 30 días, pero dentro del periodo anterior equivalente
+      id: 'c4', estado: 'completada', created_at: '2026-06-25T10:00:00Z', completed_at: '2026-07-01T10:00:00Z',
+      estatus_cobro: 'pagada', tecnico: 'Beto', servicios: ['audio'], tipo_cliente: 'hogar'
+    }
+  ];
+
+  const d = calcularDashboard(ordenes, '30d', ahora);
+
+  assert.equal(d.pendientes, 2);
+  assert.equal(d.total, 6);
+  assert.equal(d.porCobrar, 1);
+  assert.equal(d.cobradas, 1);
+  assert.equal(d.pagadas, 2);
+  assert.equal(d.completadasPeriodo, 3);
+  assert.equal(d.completadasPeriodoPrevio, 1);
+
+  assert.deepEqual(d.porTecnico, [{ nombre: 'Ana', cuenta: 2 }, { nombre: 'Beto', cuenta: 1 }]);
+  assert.deepEqual(d.porCobrarLista.map(o => o.id), ['c1']);
+
+  assert.deepEqual(d.servicios, [
+    { clave: 'camaras', cuenta: 2, pct: 50 },
+    { clave: 'audio', cuenta: 1, pct: 25 },
+    { clave: 'internet', cuenta: 1, pct: 25 }
+  ]);
+  assert.deepEqual(d.tipoCliente, [
+    { clave: 'hogar', cuenta: 2, pct: 67 },
+    { clave: 'empresa', cuenta: 1, pct: 33 }
+  ]);
+
+  assert.equal(d.porMes.length, 6);
+  assert.deepEqual(d.porMes.map(m => m.cuenta), [0, 0, 0, 1, 0, 5]);
+  assert.equal(d.porMes.at(-1).mes, 7); // agosto (0-indexado)
+});
+
+test('calcularDashboard con "anio" usa lo que va del año como ventana', () => {
+  const ahora = new Date('2026-03-10T12:00:00Z'); // 68 días desde el 1 de enero
+  const ordenes = [
+    { id: 'a', estado: 'completada', created_at: '2026-02-01T10:00:00Z', completed_at: '2026-02-01T10:00:00Z', estatus_cobro: 'pagada' },
+    { id: 'b', estado: 'completada', created_at: '2025-12-01T10:00:00Z', completed_at: '2025-12-01T10:00:00Z', estatus_cobro: 'pagada' }
+  ];
+  const d = calcularDashboard(ordenes, 'anio', ahora);
+  assert.equal(d.completadasPeriodo, 1); // solo la de este año
+  assert.equal(d.completadasPeriodoPrevio, 1); // la de diciembre cae en la ventana equivalente del año pasado
+});
+
+test('calcularDashboard no truena con una lista vacía', () => {
+  const d = calcularDashboard([], '7d', new Date('2026-08-15T12:00:00Z'));
+  assert.equal(d.total, 0);
+  assert.deepEqual(d.porTecnico, []);
+  assert.deepEqual(d.porCobrarLista, []);
+  assert.deepEqual(d.servicios, []);
+  assert.deepEqual(d.tipoCliente, []);
+  assert.equal(d.porMes.length, 6);
 });
 
 test('filtrarOrdenes busca por cliente o folio, sin acentos ni mayúsculas', () => {
