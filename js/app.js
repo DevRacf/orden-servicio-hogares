@@ -144,6 +144,9 @@ function pintarListas(ordenes) {
     cobradas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes cobradas</p>';
   $('#lista-pagadas').innerHTML =
     pagadas.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pagadas</p>';
+  $('#cuenta-por-cobrar').textContent = porCobrar.length;
+  $('#cuenta-cobradas').textContent = cobradas.length;
+  $('#cuenta-pagadas').textContent = pagadas.length;
 }
 
 async function renderLista() {

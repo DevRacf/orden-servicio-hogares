@@ -37,12 +37,21 @@
       <h2>Completadas</h2>
       <div id="lista-completadas"></div>
       <div id="seccion-cobros" class="oculto">
-        <h2>Por cobrar</h2>
-        <div id="lista-por-cobrar"></div>
-        <h2>Cobradas</h2>
-        <div id="lista-cobradas"></div>
-        <h2>Pagadas</h2>
-        <div id="lista-pagadas"></div>
+        <h2>Cobros</h2>
+        <div class="kanban-cobros">
+          <details class="col-cobro col-por-cobrar" open>
+            <summary><span class="titulo-col">Por cobrar</span><span class="cuenta" id="cuenta-por-cobrar">0</span></summary>
+            <div id="lista-por-cobrar" class="cuerpo-col"></div>
+          </details>
+          <details class="col-cobro col-cobrada" open>
+            <summary><span class="titulo-col">Cobradas</span><span class="cuenta" id="cuenta-cobradas">0</span></summary>
+            <div id="lista-cobradas" class="cuerpo-col"></div>
+          </details>
+          <details class="col-cobro col-pagada" open>
+            <summary><span class="titulo-col">Pagadas</span><span class="cuenta" id="cuenta-pagadas">0</span></summary>
+            <div id="lista-pagadas" class="cuerpo-col"></div>
+          </details>
+        </div>
       </div>
     </section>
 

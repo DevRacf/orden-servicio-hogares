@@ -10,6 +10,12 @@
   --pendiente-texto: #92400E;
   --completada-fondo: #D7F5E3;
   --completada-texto: #14683C;
+  --cobrar-fondo: #FFE4C7;
+  --cobrar-texto: #9A3412;
+  --cobrada-fondo: #DBEAFE;
+  --cobrada-texto: #1E40AF;
+  --pagada-fondo: #BBF0D4;
+  --pagada-texto: #0A5C3A;
 }
 
 * { box-sizing: border-box; }
@@ -39,6 +45,13 @@ body {
 }
 
 main { max-width: 640px; margin: 0 auto; padding: 1rem; }
+
+/* La lista necesita más aire en pantallas grandes para que el kanban de
+   cobros quepa en columnas lado a lado; el resto de vistas (formularios)
+   se quedan angostas, que se leen mejor. */
+@media (min-width: 860px) {
+  main:has(#vista-lista:not(.oculto)) { max-width: 1100px; }
+}
 
 .oculto { display: none !important; }
 
@@ -225,3 +238,61 @@ canvas.firma {
 }
 
 .estado.por-enviar { background: var(--azul); color: var(--blanco); }
+
+/* Tablero de cobros (solo oficina): cada estatus es un <details> — en
+   móvil es un acordeón nativo (sin JS), en pantallas grandes se acomodan
+   como columnas de kanban lado a lado. */
+.kanban-cobros { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.col-cobro summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+.col-cobro summary::-webkit-details-marker { display: none; }
+.col-cobro summary::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+.col-cobro summary .titulo-col { flex: 1; }
+.col-cobro summary .cuenta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 0.05rem 0.5rem;
+  border-radius: 99px;
+}
+
+.col-por-cobrar summary { background: var(--cobrar-fondo); color: var(--cobrar-texto); }
+.col-cobrada summary { background: var(--cobrada-fondo); color: var(--cobrada-texto); }
+.col-pagada summary { background: var(--pagada-fondo); color: var(--pagada-texto); }
+
+.cuerpo-col { padding: 0.6rem 0.1rem 0.1rem; }
+.col-por-cobrar .cuerpo-col .tarjeta { border-left: 4px solid var(--cobrar-texto); }
+.col-cobrada .cuerpo-col .tarjeta { border-left: 4px solid var(--cobrada-texto); }
+.col-pagada .cuerpo-col .tarjeta { border-left: 4px solid var(--pagada-texto); }
+
+@media (min-width: 860px) {
+  .kanban-cobros { flex-direction: row; align-items: flex-start; gap: 1rem; }
+  .col-cobro { flex: 1; min-width: 0; }
+  .cuerpo-col {
+    background: var(--fondo);
+    border: 1px solid rgba(11, 37, 69, 0.12);
+    border-radius: 0 0 10px 10px;
+    padding: 0.7rem;
+    min-height: 100px;
+  }
+  .col-cobro summary { border-radius: 10px 10px 0 0; }
+}
