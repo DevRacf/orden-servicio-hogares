@@ -63,15 +63,29 @@ test('limpiarMateriales descarta filas vacías o inválidas y normaliza', () => 
   assert.deepEqual(limpiarMateriales(undefined), []);
 });
 
-test('validarCierre exige trabajo realizado y firma del cliente', () => {
+test('validarCierre exige trabajo realizado y firma o nombre del cliente', () => {
   const r = validarCierre({ trabajo_realizado: ' ', firma_cliente: null });
   assert.equal(r.ok, false);
   assert.equal(r.errores.length, 2);
-  const ok = validarCierre({
+  const conFirma = validarCierre({
     trabajo_realizado: 'Instalación de 4 cámaras',
     firma_cliente: 'data:image/png;base64,xyz'
   });
-  assert.equal(ok.ok, true);
+  assert.equal(conFirma.ok, true);
+  // Sin firma dibujada pero con nombre escrito también es válido.
+  const conNombre = validarCierre({
+    trabajo_realizado: 'Instalación de 4 cámaras',
+    firma_cliente: null,
+    autoriza_nombre: 'Juan Pérez'
+  });
+  assert.equal(conNombre.ok, true);
+  // Nombre en blanco no cuenta como si lo hubieran escrito.
+  const nombreVacio = validarCierre({
+    trabajo_realizado: 'Instalación de 4 cámaras',
+    firma_cliente: null,
+    autoriza_nombre: '   '
+  });
+  assert.equal(nombreVacio.ok, false);
 });
 
 test('ordenarParaLista separa por estado con las más recientes primero', () => {

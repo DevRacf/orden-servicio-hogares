@@ -56,7 +56,7 @@ export function limpiarMateriales(filas) {
 export function validarCierre(d) {
   const errores = [];
   if (!d.trabajo_realizado?.trim()) errores.push('Describe el trabajo realizado');
-  if (!d.firma_cliente) errores.push('Falta la firma del cliente');
+  if (!d.firma_cliente && !d.autoriza_nombre?.trim()) errores.push('Falta la firma del cliente o el nombre de quien autoriza');
   return { ok: errores.length === 0, errores };
 }
 

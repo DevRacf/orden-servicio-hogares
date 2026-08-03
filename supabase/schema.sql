@@ -35,6 +35,10 @@ create table if not exists ordenes (
   materiales_cliente jsonb not null default '[]'::jsonb,
   firma_tecnico text,
   firma_cliente text,
+  -- Cuando el cliente no puede firmar en pantalla (no está presente, o
+  -- alguien más recibió al técnico): nombre de quien autoriza, en vez de la
+  -- firma. Una orden completada trae firma_cliente o autoriza_nombre.
+  autoriza_nombre text,
   completed_at timestamptz,
   -- Null mientras está pendiente, y sigue null al completarse hasta que
   -- oficina la mueve a mano a alguna columna de cobro desde el detalle de
@@ -122,7 +126,8 @@ create or replace function completar_orden(
   p_firma_tecnico text,
   p_firma_cliente text,
   p_completed_at timestamptz,
-  p_materiales_cliente jsonb default '[]'::jsonb
+  p_materiales_cliente jsonb default '[]'::jsonb,
+  p_autoriza_nombre text default null
 ) returns ordenes
 language plpgsql
 security definer
@@ -141,6 +146,7 @@ begin
     materiales_cliente = p_materiales_cliente,
     firma_tecnico = p_firma_tecnico,
     firma_cliente = p_firma_cliente,
+    autoriza_nombre = p_autoriza_nombre,
     estado = 'completada',
     estatus_cobro = null,
     completed_at = coalesce(p_completed_at, now())
@@ -155,8 +161,8 @@ begin
 end;
 $$;
 
-revoke execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz, jsonb) from public;
-grant execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz, jsonb) to authenticated;
+revoke execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz, jsonb, text) from public;
+grant execute on function completar_orden(uuid, text, jsonb, text, text, timestamptz, jsonb, text) to authenticated;
 
 -- Técnicos iniciales: edita los nombres reales aquí o después en Table Editor
 insert into tecnicos (nombre) values ('Técnico 1'), ('Técnico 2');

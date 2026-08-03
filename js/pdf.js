@@ -159,6 +159,16 @@ export function generarPdf(orden) {
   }
   if (orden.firma_cliente) {
     doc.addImage(orden.firma_cliente, 'PNG', DERECHA - ANCHO_FIRMA, y, ANCHO_FIRMA, ALTO_FIRMA);
+  } else if (orden.autoriza_nombre) {
+    // El cliente no firmó en pantalla — se imprime el nombre de quien
+    // recibió/autorizó en vez de la imagen de la firma.
+    const centro = DERECHA - ANCHO_FIRMA / 2;
+    doc.setFont('helvetica', 'bolditalic');
+    doc.setFontSize(13);
+    doc.text(orden.autoriza_nombre, centro, y + ALTO_FIRMA - 10, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text('(autorizó — sin firma)', centro, y + ALTO_FIRMA - 4, { align: 'center' });
   }
   y += ALTO_FIRMA + 3;
   doc.line(MARGEN, y, MARGEN + ANCHO_FIRMA, y);

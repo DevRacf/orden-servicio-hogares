@@ -56,6 +56,12 @@ function ocultarSelectorDireccion() {
   $('#select-direccion-nueva').innerHTML = '';
 }
 
+function mostrarModoFirmaCliente(sinFirma) {
+  $('#firma-cliente').classList.toggle('oculto', sinFirma);
+  $('[data-limpia="cliente"]').classList.toggle('oculto', sinFirma);
+  $('#campo-autoriza-nombre').classList.toggle('oculto', !sinFirma);
+}
+
 // Precarga las filas con los materiales ya guardados (p. ej. los que la
 // oficina agregó mientras la orden seguía pendiente); si no hay ninguno,
 // una fila vacía para empezar.
@@ -528,6 +534,9 @@ async function renderOrden(id, forzar = false) {
     $('#trabajo-realizado').value = '';
     $('#filas-materiales').replaceChildren(...filasMateriales(o.materiales));
     $('#filas-materiales-cliente').replaceChildren(...filasMateriales(o.materiales_cliente));
+    $('#chk-sin-firma-cliente').checked = false;
+    $('#autoriza-nombre').value = '';
+    mostrarModoFirmaCliente(false);
     pads = {
       tecnico: crearPad(document.getElementById('firma-tecnico')),
       cliente: crearPad(document.getElementById('firma-cliente'))
@@ -713,6 +722,12 @@ $('#select-estatus-cobro').addEventListener('change', async (e) => {
 document.querySelectorAll('[data-limpia]').forEach(b =>
   b.addEventListener('click', () => pads?.[b.dataset.limpia]?.limpiar()));
 
+$('#chk-sin-firma-cliente').addEventListener('change', (e) => {
+  mostrarModoFirmaCliente(e.target.checked);
+  if (e.target.checked) pads?.cliente?.limpiar();
+  else $('#autoriza-nombre').value = '';
+});
+
 $('#btn-pdf').addEventListener('click', () => compartirPdf(ordenActual));
 
 $('#btn-eliminar-orden').addEventListener('click', async () => {
@@ -733,12 +748,14 @@ $('#btn-eliminar-orden').addEventListener('click', async () => {
 
 $('#form-completar').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const sinFirmaCliente = $('#chk-sin-firma-cliente').checked;
   const cierre = {
     trabajo_realizado: $('#trabajo-realizado').value,
     materiales: limpiarMateriales(leerFilasMateriales('filas-materiales')),
     materiales_cliente: limpiarMateriales(leerFilasMateriales('filas-materiales-cliente')),
     firma_tecnico: pads.tecnico.vacia() ? null : pads.tecnico.imagen(),
-    firma_cliente: pads.cliente.vacia() ? null : pads.cliente.imagen()
+    firma_cliente: sinFirmaCliente || pads.cliente.vacia() ? null : pads.cliente.imagen(),
+    autoriza_nombre: sinFirmaCliente ? $('#autoriza-nombre').value.trim() || null : null
   };
   const v = validarCierre(cierre);
   if (!v.ok) return mostrarError('error-completar', v.errores);

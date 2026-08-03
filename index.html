@@ -286,8 +286,18 @@
         <canvas id="firma-tecnico" class="firma"></canvas>
         <button type="button" data-limpia="tecnico" class="liga">Limpiar firma</button>
         <h3>Firma del cliente</h3>
+        <label class="fila-casilla">
+          <input type="checkbox" id="chk-sin-firma-cliente">
+          <span>El cliente no puede firmar aquí — anotar su nombre
+            <span class="ayuda-chica">Por ejemplo, si no está presente o alguien más recibió la orden.</span>
+          </span>
+        </label>
         <canvas id="firma-cliente" class="firma"></canvas>
         <button type="button" data-limpia="cliente" class="liga">Limpiar firma</button>
+        <label id="campo-autoriza-nombre" class="oculto">Nombre de quien recibe / autoriza
+          <input type="text" id="autoriza-nombre" placeholder="Ej. Juan Pérez">
+          <span class="ayuda-chica">Se imprime en el PDF en vez de la firma dibujada.</span>
+        </label>
         <p id="error-completar" class="error oculto"></p>
         <button type="submit">Guardar y completar</button>
       </form>

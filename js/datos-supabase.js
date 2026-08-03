@@ -184,7 +184,8 @@ export async function completarOrden(id, cierre) {
     p_materiales_cliente: cierre.materiales_cliente,
     p_firma_tecnico: cierre.firma_tecnico,
     p_firma_cliente: cierre.firma_cliente,
-    p_completed_at: cierre.completed_at || new Date().toISOString()
+    p_completed_at: cierre.completed_at || new Date().toISOString(),
+    p_autoriza_nombre: cierre.autoriza_nombre || null
   });
   if (error) throw error;
   return data;

@@ -233,6 +233,22 @@ canvas.firma {
   touch-action: none;
 }
 
+.fila-casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  background: var(--blanco);
+  border: 2px solid var(--azul);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 0.7rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.fila-casilla input { margin-top: 0.15rem; width: 1.05rem; height: 1.05rem; accent-color: var(--acento); flex: none; }
+.ayuda-chica { display: block; font-weight: 400; color: var(--gris); font-size: 0.78rem; margin-top: 0.15rem; }
+
 #buscador, #buscador-clientes { margin-top: 0.8rem; }
 
 .tarjeta-cliente {
