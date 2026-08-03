@@ -66,17 +66,24 @@ export const ESTATUS_COBRO = {
   pagada: 'Pagada'
 };
 
-export function ordenarParaLista(ordenes) {
+export function ordenarParaLista(ordenes, rol) {
   const recientesPrimero = (campo) => (a, b) => (a[campo] < b[campo] ? 1 : -1);
   const todasCompletadas = ordenes.filter(o => o.estado === 'completada').sort(recientesPrimero('completed_at'));
   const porEstatusCobro = (estatus) => todasCompletadas.filter(o => o.estatus_cobro === estatus);
-  return {
-    pendientes: ordenes.filter(o => o.estado === 'pendiente').sort(recientesPrimero('created_at')),
+  // Las columnas de cobro son solo de oficina — los técnicos nunca las ven,
+  // así que para ellos "completadas" muestra siempre todo lo completado, se
+  // haya movido de cobro o no. Si no, una orden que oficina ya categorizó
+  // desaparecería de su vista sin que la vuelvan a ver en ningún lado.
+  const completadas = rol === 'tecnico'
+    ? todasCompletadas
     // Sin estatus de cobro asignado (recién completada, o de antes de que
     // existiera esta columna): se queda solo aquí hasta que oficina la mueva
     // a mano a alguna de las tres columnas de abajo. Cada orden vive en una
     // sola sección — nunca se duplica entre completadas/por cobrar/cobrada/pagada.
-    completadas: todasCompletadas.filter(o => !o.estatus_cobro),
+    : todasCompletadas.filter(o => !o.estatus_cobro);
+  return {
+    pendientes: ordenes.filter(o => o.estado === 'pendiente').sort(recientesPrimero('created_at')),
+    completadas,
     porCobrar: porEstatusCobro('por_cobrar'),
     cobradas: porEstatusCobro('cobrada'),
     pagadas: porEstatusCobro('pagada')

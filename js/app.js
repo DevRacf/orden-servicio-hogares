@@ -114,6 +114,10 @@ function actualizarVisibilidadPorRol() {
   const puedeVerCobro = ordenActual?.estado === 'completada' && rolActual === 'oficina';
   $('#control-cobro').classList.toggle('oculto', !puedeVerCobro);
   $('#btn-eliminar-orden').classList.toggle('oculto', !puedeVerCobro);
+  // El rol puede resolverse después de que la lista ya se pintó (se pinta sin
+  // esperar red, ver rutear()); si acaba de llegar y cambia qué cuenta como
+  // "completada" según el rol, se repinta con lo que ya está cargado.
+  if (ordenesCargadas.length) pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
 }
 
 async function rutear() {
@@ -189,7 +193,7 @@ function tarjetaOrden(o) {
 }
 
 function pintarListas(ordenes) {
-  const { pendientes, completadas, porCobrar, cobradas, pagadas } = ordenarParaLista(ordenes);
+  const { pendientes, completadas, porCobrar, cobradas, pagadas } = ordenarParaLista(ordenes, rolActual);
   $('#lista-pendientes').innerHTML =
     pendientes.map(tarjetaOrden).join('') || '<p class="vacio">Sin órdenes pendientes</p>';
   $('#lista-completadas').innerHTML =

@@ -103,6 +103,19 @@ test('ordenarParaLista agrupa las completadas por estatus de cobro, sin duplicar
   assert.deepEqual(pagadas.map(o => o.id), ['c']);
 });
 
+test('ordenarParaLista para técnicos muestra todo lo completado, sin importar el cobro', () => {
+  const ordenes = [
+    { id: 'a', estado: 'completada', completed_at: '2026-07-01T10:00:00Z', estatus_cobro: 'por_cobrar' },
+    { id: 'b', estado: 'completada', completed_at: '2026-07-02T10:00:00Z', estatus_cobro: 'cobrada' },
+    { id: 'c', estado: 'completada', completed_at: '2026-07-03T10:00:00Z', estatus_cobro: 'pagada' },
+    { id: 'd', estado: 'completada', completed_at: '2026-07-04T10:00:00Z' }
+  ];
+  const { completadas } = ordenarParaLista(ordenes, 'tecnico');
+  // Los técnicos no ven las columnas de cobro, así que a ellos no se les debe
+  // "perder" una orden nada más porque oficina ya la categorizó.
+  assert.deepEqual(completadas.map(o => o.id), ['d', 'c', 'b', 'a']);
+});
+
 test('formatearFecha regresa vacío sin fecha y texto legible con fecha', () => {
   assert.equal(formatearFecha(null), '');
   assert.match(formatearFecha('2026-07-14T12:00:00Z'), /2026/);
