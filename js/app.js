@@ -38,7 +38,13 @@ function filasMateriales(lista) {
 
 const VISTAS = ['vista-login', 'vista-lista', 'vista-nueva', 'vista-orden'];
 
+// Se guarda aquí (no en el historial del navegador) para poder restaurarlo
+// al volver a la lista con "← Órdenes" o con el botón atrás del celular.
+let scrollListaGuardado = 0;
+
 function mostrarVista(id) {
+  const listaVisible = !document.getElementById('vista-lista').classList.contains('oculto');
+  if (listaVisible && id !== 'vista-lista') scrollListaGuardado = window.scrollY;
   for (const v of VISTAS) document.getElementById(v).classList.toggle('oculto', v !== id);
 }
 
@@ -165,6 +171,10 @@ async function renderLista() {
   if ((location.hash || '#/') !== hashEsperado) return;
   ordenesCargadas = ordenes;
   pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
+  // Solo al volver de otra vista (no en un refresco de fondo): espera a que
+  // el navegador acomode el layout con el contenido ya pintado antes de
+  // restaurar dónde estaba, si no el scroll se queda en 0 sin efecto.
+  if (!yaVisible) requestAnimationFrame(() => window.scrollTo(0, scrollListaGuardado));
 }
 
 async function renderNueva() {
@@ -383,11 +393,12 @@ $('#btn-eliminar-orden').addEventListener('click', async () => {
   boton.disabled = true;
   try {
     await datos.eliminarOrden(o.id);
+    navegar('#/');
   } catch {
+    mostrarError('error-eliminar', 'No se pudo borrar. Revisa tu conexión e intenta de nuevo.');
+  } finally {
     boton.disabled = false;
-    return mostrarError('error-eliminar', 'No se pudo borrar. Revisa tu conexión e intenta de nuevo.');
   }
-  navegar('#/');
 });
 
 $('#form-completar').addEventListener('submit', async (e) => {
