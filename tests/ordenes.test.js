@@ -4,7 +4,7 @@ import {
   TIPOS_SERVICIO, TIPOS_CLIENTE,
   validarNuevaOrden, limpiarMateriales, validarCierre,
   ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes,
-  calcularDashboard
+  calcularDashboard, filtrarClientes
 } from '../js/ordenes.js';
 
 test('validarNuevaOrden acepta una orden completa', () => {
@@ -183,6 +183,19 @@ test('calcularDashboard no truena con una lista vacía', () => {
   assert.deepEqual(d.servicios, []);
   assert.deepEqual(d.tipoCliente, []);
   assert.equal(d.porMes.length, 6);
+});
+
+test('filtrarClientes busca por nombre o teléfono, sin acentos ni mayúsculas', () => {
+  const clientes = [
+    { id: 'a', nombre: 'Familia Gómez Herrera', telefono: '3312345678' },
+    { id: 'b', nombre: 'Ferretería El Martillo', telefono: '3398765432' },
+    { id: 'c', nombre: 'Consultorio Dental Sonrisa', telefono: null }
+  ];
+  assert.deepEqual(filtrarClientes(clientes, 'gomez').map(c => c.id), ['a']);
+  assert.deepEqual(filtrarClientes(clientes, 'FERRETERIA').map(c => c.id), ['b']);
+  assert.deepEqual(filtrarClientes(clientes, '3398').map(c => c.id), ['b']);
+  assert.deepEqual(filtrarClientes(clientes, '  '), clientes);
+  assert.deepEqual(filtrarClientes(clientes, 'zzz'), []);
 });
 
 test('filtrarOrdenes busca por cliente o folio, sin acentos ni mayúsculas', () => {

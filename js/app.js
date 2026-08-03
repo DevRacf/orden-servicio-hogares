@@ -3,7 +3,7 @@ import {
   TIPOS_CLIENTE, TIPOS_SERVICIO,
   validarNuevaOrden, validarCierre, limpiarMateriales,
   ordenarParaLista, formatearFecha, etiquetasServicios, filtrarOrdenes,
-  calcularDashboard
+  calcularDashboard, filtrarClientes
 } from './ordenes.js';
 import { crearPad } from './firma.js';
 import { compartirPdf } from './pdf.js';
@@ -14,12 +14,20 @@ let ordenActual = null;
 let pads = null;
 let ordenesCargadas = [];
 let rolActual = null;
+let clientesNuevaCargados = [];
+let clientesVistaCargados = [];
+
+const OPCIONES_CANTIDAD = Array.from({ length: 20 }, (_, i) => i + 1)
+  .map(n => `<option value="${n}">${n}</option>`).join('');
 
 function filaMaterial(material) {
   const div = document.createElement('div');
   div.className = 'fila-material';
   div.innerHTML = `
-    <input type="number" min="1" class="cantidad" placeholder="Cant.">
+    <select class="cantidad" aria-label="Cantidad">
+      <option value="" disabled ${material ? '' : 'selected'}>Cant.</option>
+      ${OPCIONES_CANTIDAD}
+    </select>
     <input type="text" class="descripcion" placeholder="Descripción / modelo">
     <button type="button" class="quitar" aria-label="Quitar fila">×</button>`;
   if (material) {
@@ -30,6 +38,18 @@ function filaMaterial(material) {
   return div;
 }
 
+function leerFilasMateriales(contenedorId) {
+  return [...document.querySelectorAll(`#${contenedorId} .fila-material`)].map(f => ({
+    cantidad: f.querySelector('.cantidad').value,
+    descripcion: f.querySelector('.descripcion').value
+  }));
+}
+
+function ocultarSelectorDireccion() {
+  $('#campo-direccion-guardada').classList.add('oculto');
+  $('#select-direccion-nueva').innerHTML = '';
+}
+
 // Precarga las filas con los materiales ya guardados (p. ej. los que la
 // oficina agregó mientras la orden seguía pendiente); si no hay ninguno,
 // una fila vacía para empezar.
@@ -37,7 +57,7 @@ function filasMateriales(lista) {
   return (lista && lista.length ? lista : [null]).map(filaMaterial);
 }
 
-const VISTAS = ['vista-login', 'vista-lista', 'vista-nueva', 'vista-orden', 'vista-dashboard'];
+const VISTAS = ['vista-login', 'vista-lista', 'vista-nueva', 'vista-orden', 'vista-dashboard', 'vista-clientes'];
 
 // Se guarda aquí (no en el historial del navegador) para poder restaurarlo
 // al volver a la lista con "← Órdenes" o con el botón atrás del celular.
@@ -76,6 +96,7 @@ async function obtenerRolCacheado() {
 function actualizarVisibilidadPorRol() {
   $('#link-nueva-orden').classList.toggle('oculto', rolActual === 'tecnico');
   $('#link-dashboard').classList.toggle('oculto', rolActual !== 'oficina');
+  $('#link-clientes').classList.toggle('oculto', rolActual !== 'oficina');
   $('#seccion-cobros').classList.toggle('oculto', rolActual !== 'oficina');
   const puedeEditar = ordenActual?.estado === 'pendiente' && rolActual === 'oficina'
     && $('#form-editar').classList.contains('oculto');
@@ -90,6 +111,7 @@ async function rutear() {
     if (!(await datos.haySesion())) {
       $('#btn-salir').classList.add('oculto');
       $('#link-dashboard').classList.add('oculto');
+      $('#link-clientes').classList.add('oculto');
       mostrarVista('vista-login');
       rolActual = null; // se vuelve a resolver en el siguiente login
       return;
@@ -113,6 +135,13 @@ async function rutear() {
       actualizarVisibilidadPorRol();
       if (rolActual !== 'oficina') { location.hash = '#/'; return; }
       await renderDashboard();
+      return;
+    }
+    if (hash === '#/clientes') {
+      await obtenerRolCacheado();
+      actualizarVisibilidadPorRol();
+      if (rolActual !== 'oficina') { location.hash = '#/'; return; }
+      await renderClientes();
       return;
     }
     // Para las demás rutas no se espera: no debe bloquear la navegación ni
@@ -191,11 +220,127 @@ async function renderLista() {
 
 async function renderNueva() {
   mostrarVista('vista-nueva');
+  $('#filas-materiales-nueva').replaceChildren(...filasMateriales([]));
+  $('#filas-materiales-cliente-nueva').replaceChildren(...filasMateriales([]));
+  ocultarSelectorDireccion();
   const hashEsperado = location.hash;
-  const tecnicos = await datos.listarTecnicos();
+  const [tecnicos, clientes] = await Promise.all([datos.listarTecnicos(), datos.listarClientes()]);
   if (location.hash !== hashEsperado) return;
   $('#select-tecnico').innerHTML =
     tecnicos.map(t => `<option>${escapar(t)}</option>`).join('');
+  clientesNuevaCargados = clientes;
+  $('#datalist-clientes').replaceChildren(...clientes.map(c => {
+    const opt = document.createElement('option');
+    opt.value = c.nombre;
+    return opt;
+  }));
+}
+
+function filaDireccion(direccion) {
+  const div = document.createElement('div');
+  div.className = 'fila-direccion';
+  div.innerHTML = `
+    <input type="text" class="texto-direccion" aria-label="Dirección">
+    <button type="button" class="quitar" aria-label="Quitar dirección">×</button>`;
+  const input = div.querySelector('.texto-direccion');
+  input.value = direccion.direccion;
+  input.addEventListener('change', async () => {
+    const texto = input.value.trim();
+    if (!texto) { input.value = direccion.direccion; return; }
+    try {
+      await datos.actualizarDireccion(direccion.id, texto);
+      direccion.direccion = texto;
+    } catch {
+      input.value = direccion.direccion;
+      alert('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    }
+  });
+  div.querySelector('.quitar').addEventListener('click', async () => {
+    if (!confirm('¿Quitar esta dirección?')) return;
+    try {
+      await datos.eliminarDireccion(direccion.id);
+      div.remove();
+    } catch {
+      alert('No se pudo quitar. Revisa tu conexión e intenta de nuevo.');
+    }
+  });
+  return div;
+}
+
+function tarjetaCliente(cliente) {
+  const div = document.createElement('div');
+  div.className = 'tarjeta-cliente';
+  div.innerHTML = `
+    <div class="fila-nombre-tel">
+      <input type="text" class="nombre-cliente" aria-label="Nombre">
+      <input type="tel" class="telefono-cliente" placeholder="Teléfono" aria-label="Teléfono">
+    </div>
+    <h4>Direcciones</h4>
+    <div class="filas-direcciones"></div>
+    <button type="button" class="liga agregar-direccion">+ Agregar dirección</button>`;
+
+  const nombreInput = div.querySelector('.nombre-cliente');
+  nombreInput.value = cliente.nombre;
+  nombreInput.addEventListener('change', async () => {
+    const texto = nombreInput.value.trim();
+    if (!texto) { nombreInput.value = cliente.nombre; return; }
+    try {
+      await datos.actualizarCliente(cliente.id, { nombre: texto });
+      cliente.nombre = texto;
+    } catch {
+      nombreInput.value = cliente.nombre;
+      alert('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    }
+  });
+
+  const telInput = div.querySelector('.telefono-cliente');
+  telInput.value = cliente.telefono || '';
+  telInput.addEventListener('change', async () => {
+    const texto = telInput.value.trim();
+    try {
+      await datos.actualizarCliente(cliente.id, { telefono: texto || null });
+      cliente.telefono = texto;
+    } catch {
+      telInput.value = cliente.telefono || '';
+      alert('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    }
+  });
+
+  const contenedorDirecciones = div.querySelector('.filas-direcciones');
+  contenedorDirecciones.replaceChildren(...(cliente.direcciones || []).map(filaDireccion));
+
+  div.querySelector('.agregar-direccion').addEventListener('click', async () => {
+    const texto = prompt('Nueva dirección:');
+    if (!texto || !texto.trim()) return;
+    try {
+      const nueva = await datos.agregarDireccion(cliente.id, texto.trim());
+      cliente.direcciones = [...(cliente.direcciones || []), nueva];
+      contenedorDirecciones.appendChild(filaDireccion(nueva));
+    } catch {
+      alert('No se pudo agregar. Revisa tu conexión e intenta de nuevo.');
+    }
+  });
+
+  return div;
+}
+
+function pintarClientes(clientes) {
+  if (!clientes.length) {
+    $('#lista-clientes-vista').innerHTML = '<p class="vacio">Sin clientes todavía</p>';
+    return;
+  }
+  $('#lista-clientes-vista').replaceChildren(...clientes.map(tarjetaCliente));
+}
+
+async function renderClientes() {
+  const yaVisible = !document.getElementById('vista-clientes').classList.contains('oculto');
+  mostrarVista('vista-clientes');
+  if (!yaVisible) $('#buscador-clientes').value = '';
+  const hashEsperado = location.hash;
+  const clientes = await datos.listarClientes();
+  if (location.hash !== hashEsperado) return;
+  clientesVistaCargados = clientes;
+  pintarClientes(filtrarClientes(clientesVistaCargados, $('#buscador-clientes').value));
 }
 
 let rangoDashboard = '30d';
@@ -403,11 +548,50 @@ $('#vista-dashboard .selector-rango').addEventListener('click', (e) => {
   pintarDashboard();
 });
 
+$('#buscador-clientes').addEventListener('input', () => {
+  pintarClientes(filtrarClientes(clientesVistaCargados, $('#buscador-clientes').value));
+});
+
+$('#cliente-nombre-nueva').addEventListener('input', () => {
+  const nombre = $('#cliente-nombre-nueva').value.trim().toLowerCase();
+  const cliente = nombre && clientesNuevaCargados.find(c => c.nombre.trim().toLowerCase() === nombre);
+  if (!cliente) { ocultarSelectorDireccion(); return; }
+  if (cliente.telefono) $('#form-nueva [name="cliente_telefono"]').value = cliente.telefono;
+  const direcciones = cliente.direcciones || [];
+  if (direcciones.length <= 1) {
+    ocultarSelectorDireccion();
+    if (direcciones.length === 1) $('#form-nueva [name="cliente_direccion"]').value = direcciones[0].direccion;
+  } else {
+    $('#select-direccion-nueva').replaceChildren(...direcciones.map(d => {
+      const opt = document.createElement('option');
+      opt.value = d.direccion;
+      opt.textContent = d.direccion;
+      return opt;
+    }));
+    $('#campo-direccion-guardada').classList.remove('oculto');
+    $('#form-nueva [name="cliente_direccion"]').value = direcciones[0].direccion;
+  }
+});
+
+$('#select-direccion-nueva').addEventListener('change', (e) => {
+  $('#form-nueva [name="cliente_direccion"]').value = e.target.value;
+});
+
+$('#btn-agregar-material-nueva').addEventListener('click', () => {
+  $('#filas-materiales-nueva').appendChild(filaMaterial());
+});
+
+$('#btn-agregar-material-cliente-nueva').addEventListener('click', () => {
+  $('#filas-materiales-cliente-nueva').appendChild(filaMaterial());
+});
+
 $('#form-nueva').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const d = Object.fromEntries(form);
   d.servicios = form.getAll('servicios');
+  d.materiales = limpiarMateriales(leerFilasMateriales('filas-materiales-nueva'));
+  d.materiales_cliente = limpiarMateriales(leerFilasMateriales('filas-materiales-cliente-nueva'));
   const v = validarNuevaOrden(d);
   if (!v.ok) return mostrarError('error-nueva', v.errores);
   limpiarError('error-nueva');
@@ -420,7 +604,11 @@ $('#form-nueva').addEventListener('submit', async (e) => {
   } finally {
     boton.disabled = false;
   }
+  datos.registrarClienteDesdeOrden(d).catch(err => console.error(err));
   e.target.reset();
+  $('#filas-materiales-nueva').replaceChildren(...filasMateriales([]));
+  $('#filas-materiales-cliente-nueva').replaceChildren(...filasMateriales([]));
+  ocultarSelectorDireccion();
   navegar('#/');
 });
 
@@ -477,12 +665,8 @@ $('#form-editar').addEventListener('submit', async (e) => {
   const v = validarNuevaOrden(d);
   if (!v.ok) return mostrarError('error-editar', v.errores);
   limpiarError('error-editar');
-  const leerFilas = (contenedor) => [...document.querySelectorAll(`#${contenedor} .fila-material`)].map(f => ({
-    cantidad: f.querySelector('.cantidad').value,
-    descripcion: f.querySelector('.descripcion').value
-  }));
-  d.materiales = limpiarMateriales(leerFilas('filas-materiales-editar'));
-  d.materiales_cliente = limpiarMateriales(leerFilas('filas-materiales-cliente-editar'));
+  d.materiales = limpiarMateriales(leerFilasMateriales('filas-materiales-editar'));
+  d.materiales_cliente = limpiarMateriales(leerFilasMateriales('filas-materiales-cliente-editar'));
   const boton = e.target.querySelector('button[type="submit"]');
   boton.disabled = true;
   let ordenActualizada;
@@ -532,14 +716,10 @@ $('#btn-eliminar-orden').addEventListener('click', async () => {
 
 $('#form-completar').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const leerFilas = (contenedor) => [...document.querySelectorAll(`#${contenedor} .fila-material`)].map(f => ({
-    cantidad: f.querySelector('.cantidad').value,
-    descripcion: f.querySelector('.descripcion').value
-  }));
   const cierre = {
     trabajo_realizado: $('#trabajo-realizado').value,
-    materiales: limpiarMateriales(leerFilas('filas-materiales')),
-    materiales_cliente: limpiarMateriales(leerFilas('filas-materiales-cliente')),
+    materiales: limpiarMateriales(leerFilasMateriales('filas-materiales')),
+    materiales_cliente: limpiarMateriales(leerFilasMateriales('filas-materiales-cliente')),
     firma_tecnico: pads.tecnico.vacia() ? null : pads.tecnico.imagen(),
     firma_cliente: pads.cliente.vacia() ? null : pads.cliente.imagen()
   };

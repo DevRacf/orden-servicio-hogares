@@ -27,6 +27,13 @@ export function filtrarOrdenes(ordenes, texto) {
     normalizar(o.cliente_nombre).includes(t) || normalizar(o.folio).includes(t));
 }
 
+export function filtrarClientes(clientes, texto) {
+  const t = normalizar(texto).trim();
+  if (!t) return clientes;
+  return (clientes || []).filter(c =>
+    normalizar(c.nombre).includes(t) || normalizar(c.telefono).includes(t));
+}
+
 export function validarNuevaOrden(d) {
   const errores = [];
   if (!d.cliente_nombre?.trim()) errores.push('El nombre del cliente es obligatorio');

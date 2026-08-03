@@ -53,6 +53,7 @@ main { max-width: 640px; margin: 0 auto; padding: 1rem; }
 @media (min-width: 860px) {
   main:has(#vista-lista:not(.oculto)) { max-width: 1100px; }
   main:has(#vista-dashboard:not(.oculto)) { max-width: 1100px; }
+  main:has(#vista-clientes:not(.oculto)) { max-width: 800px; }
 }
 
 .oculto { display: none !important; }
@@ -232,7 +233,29 @@ canvas.firma {
   touch-action: none;
 }
 
-#buscador { margin-top: 0.8rem; }
+#buscador, #buscador-clientes { margin-top: 0.8rem; }
+
+.tarjeta-cliente {
+  background: var(--blanco);
+  border: 2px solid var(--azul);
+  border-radius: 12px;
+  padding: 0.9rem;
+  margin-bottom: 0.7rem;
+}
+.tarjeta-cliente .fila-nombre-tel { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.tarjeta-cliente .fila-nombre-tel input { flex: 1; min-width: 140px; margin-top: 0; }
+.tarjeta-cliente h4 { margin: 0.6rem 0 0.3rem; }
+.fila-direccion { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
+.fila-direccion input { flex: 1; margin-top: 0; }
+.fila-direccion .quitar {
+  width: 2.8rem;
+  flex: none;
+  margin-top: 0;
+  min-height: auto;
+  background: var(--fondo);
+  border: 2px solid var(--azul);
+  color: var(--azul);
+}
 
 .aviso-offline {
   background: var(--pendiente-fondo);

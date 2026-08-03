@@ -106,6 +106,76 @@ export async function eliminarOrden(id) {
   if (!data || data.length === 0) throw new Error('No se pudo borrar la orden');
 }
 
+export async function listarClientes() {
+  const { data, error } = await obtenerCliente()
+    .from('clientes')
+    .select('id, nombre, telefono, direcciones_cliente(id, direccion)')
+    .order('nombre');
+  if (error) throw error;
+  return data.map(({ direcciones_cliente, ...c }) => ({ ...c, direcciones: direcciones_cliente }));
+}
+
+// Vincula la orden recién creada con la base de clientes: si el nombre no
+// existía, se da de alta; si la dirección es nueva para ese cliente, se
+// agrega. Se llama después de guardar la orden — un fallo aquí no debe
+// tumbar la creación de la orden, así que quien la llama lo maneja aparte.
+export async function registrarClienteDesdeOrden({ cliente_nombre, cliente_telefono, cliente_direccion }) {
+  const nombre = (cliente_nombre || '').trim();
+  if (!nombre) return;
+  const db = obtenerCliente();
+  let clienteId;
+  const { data: existente, error: errBuscar } = await db
+    .from('clientes').select('id, telefono').ilike('nombre', nombre).maybeSingle();
+  if (errBuscar) throw errBuscar;
+  if (existente) {
+    clienteId = existente.id;
+    if (!existente.telefono && cliente_telefono) {
+      const { error } = await db.from('clientes').update({ telefono: cliente_telefono }).eq('id', clienteId);
+      if (error) throw error;
+    }
+  } else {
+    const { data: nuevo, error: errCrear } = await db
+      .from('clientes').insert({ nombre, telefono: cliente_telefono || null }).select('id').single();
+    if (errCrear) throw errCrear;
+    clienteId = nuevo.id;
+  }
+  const direccion = (cliente_direccion || '').trim();
+  if (!direccion) return;
+  const { data: direccionExistente, error: errDir } = await db
+    .from('direcciones_cliente').select('id').eq('cliente_id', clienteId).ilike('direccion', direccion).maybeSingle();
+  if (errDir) throw errDir;
+  if (!direccionExistente) {
+    const { error } = await db.from('direcciones_cliente').insert({ cliente_id: clienteId, direccion });
+    if (error) throw error;
+  }
+}
+
+export async function actualizarCliente(id, cambios) {
+  const { data, error } = await obtenerCliente()
+    .from('clientes').update(cambios).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function agregarDireccion(clienteId, direccion) {
+  const { data, error } = await obtenerCliente()
+    .from('direcciones_cliente').insert({ cliente_id: clienteId, direccion }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function actualizarDireccion(id, direccion) {
+  const { data, error } = await obtenerCliente()
+    .from('direcciones_cliente').update({ direccion }).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function eliminarDireccion(id) {
+  const { error } = await obtenerCliente().from('direcciones_cliente').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function completarOrden(id, cierre) {
   const { data, error } = await obtenerCliente().rpc('completar_orden', {
     p_id: id,

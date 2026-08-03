@@ -49,9 +49,28 @@ create table if not exists perfiles (
   rol text not null check (rol in ('oficina', 'tecnico'))
 );
 
+-- Base de clientes: se llena sola al crear órdenes nuevas (ver
+-- registrarClienteDesdeOrden en js/datos-supabase.js) y se usa para
+-- autocompletar teléfono/dirección al crear una orden. Solo oficina la ve.
+create table if not exists clientes (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  telefono text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists direcciones_cliente (
+  id uuid primary key default gen_random_uuid(),
+  cliente_id uuid not null references clientes(id) on delete cascade,
+  direccion text not null,
+  created_at timestamptz not null default now()
+);
+
 alter table tecnicos enable row level security;
 alter table ordenes enable row level security;
 alter table perfiles enable row level security;
+alter table clientes enable row level security;
+alter table direcciones_cliente enable row level security;
 
 create policy "leer tecnicos autenticado" on tecnicos
   for select to authenticated using (true);
@@ -78,6 +97,20 @@ create policy "borrar ordenes completadas solo oficina" on ordenes
 
 create policy "leer mi propio perfil" on perfiles
   for select to authenticated using (auth.uid() = id);
+
+create policy "clientes solo oficina" on clientes
+  for all to authenticated using (
+    exists (select 1 from perfiles where id = auth.uid() and rol = 'oficina')
+  ) with check (
+    exists (select 1 from perfiles where id = auth.uid() and rol = 'oficina')
+  );
+
+create policy "direcciones solo oficina" on direcciones_cliente
+  for all to authenticated using (
+    exists (select 1 from perfiles where id = auth.uid() and rol = 'oficina')
+  ) with check (
+    exists (select 1 from perfiles where id = auth.uid() and rol = 'oficina')
+  );
 
 -- Única puerta para cerrar una orden (tanto oficina como técnicos la usan):
 -- solo toca estas columnas, sin importar qué le manden — así se puede dar

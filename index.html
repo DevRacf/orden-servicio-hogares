@@ -13,6 +13,7 @@
   <header class="encabezado">
     <h1 class="marca">Hogares Inteligentes</h1>
     <nav class="acciones-encabezado">
+      <a href="#/clientes" id="link-clientes" class="oculto liga">Clientes</a>
       <a href="#/dashboard" id="link-dashboard" class="oculto liga">Panel</a>
       <button id="btn-salir" class="oculto liga" type="button">Salir</button>
     </nav>
@@ -109,16 +110,28 @@
       </div>
     </section>
 
+    <!-- Vista: clientes -->
+    <section id="vista-clientes" class="vista oculto">
+      <a href="#/" class="volver">← Órdenes</a>
+      <h2>Clientes</h2>
+      <input type="search" id="buscador-clientes" aria-label="Buscar cliente" placeholder="Buscar por nombre o teléfono" autocomplete="off">
+      <div id="lista-clientes-vista"></div>
+    </section>
+
     <!-- Vista: nueva orden -->
     <section id="vista-nueva" class="vista oculto">
       <a href="#/" class="volver">← Órdenes</a>
       <h2>Nueva orden</h2>
       <form id="form-nueva">
         <label>Nombre del cliente
-          <input name="cliente_nombre" required>
+          <input name="cliente_nombre" id="cliente-nombre-nueva" list="datalist-clientes" required autocomplete="off">
+          <datalist id="datalist-clientes"></datalist>
         </label>
         <label>Teléfono
           <input name="cliente_telefono" type="tel">
+        </label>
+        <label id="campo-direccion-guardada" class="oculto">Direcciones guardadas de este cliente
+          <select id="select-direccion-nueva"></select>
         </label>
         <label>Dirección
           <textarea name="cliente_direccion" rows="2" required></textarea>
@@ -164,6 +177,13 @@
         <label>Técnico asignado
           <select name="tecnico" id="select-tecnico"></select>
         </label>
+        <h3>Materiales y equipos</h3>
+        <div id="filas-materiales-nueva"></div>
+        <button type="button" id="btn-agregar-material-nueva" class="liga">+ Agregar material</button>
+        <h4>Materiales y equipo del cliente</h4>
+        <p class="ayuda">Equipo que el cliente ya tenía comprado o que se reubica desde otro sitio.</p>
+        <div id="filas-materiales-cliente-nueva"></div>
+        <button type="button" id="btn-agregar-material-cliente-nueva" class="liga">+ Agregar material del cliente</button>
         <p id="error-nueva" class="error oculto"></p>
         <button type="submit">Crear orden</button>
       </form>
