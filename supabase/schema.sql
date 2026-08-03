@@ -36,9 +36,9 @@ create table if not exists ordenes (
   firma_tecnico text,
   firma_cliente text,
   completed_at timestamptz,
-  -- Solo tiene sentido una vez completada la orden; null mientras está
-  -- pendiente. Lo pone completar_orden() al cerrar y lo cambia oficina a
-  -- mano desde el detalle de la orden.
+  -- Null mientras está pendiente, y sigue null al completarse hasta que
+  -- oficina la mueve a mano a alguna columna de cobro desde el detalle de
+  -- la orden — una completada sin asignar solo aparece en "Completadas".
   estatus_cobro text check (estatus_cobro in ('por_cobrar', 'cobrada', 'pagada'))
 );
 
@@ -142,7 +142,7 @@ begin
     firma_tecnico = p_firma_tecnico,
     firma_cliente = p_firma_cliente,
     estado = 'completada',
-    estatus_cobro = 'por_cobrar',
+    estatus_cobro = null,
     completed_at = coalesce(p_completed_at, now())
   where id = p_id and estado = 'pendiente'
   returning * into resultado;

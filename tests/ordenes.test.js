@@ -86,21 +86,21 @@ test('ordenarParaLista separa por estado con las más recientes primero', () => 
   assert.deepEqual(completadas.map(o => o.id), ['d', 'a']);
 });
 
-test('ordenarParaLista agrupa las completadas por estatus de cobro', () => {
+test('ordenarParaLista agrupa las completadas por estatus de cobro, sin duplicar ninguna', () => {
   const ordenes = [
     { id: 'a', estado: 'completada', completed_at: '2026-07-01T10:00:00Z', estatus_cobro: 'por_cobrar' },
     { id: 'b', estado: 'completada', completed_at: '2026-07-02T10:00:00Z', estatus_cobro: 'cobrada' },
     { id: 'c', estado: 'completada', completed_at: '2026-07-03T10:00:00Z', estatus_cobro: 'pagada' },
-    // sin estatus_cobro (órdenes de antes de que existiera el campo): cuentan como por cobrar
+    // sin estatus_cobro (recién completada, o de antes de que existiera el
+    // campo): se queda solo en "completadas" hasta que oficina la mueva.
     { id: 'd', estado: 'completada', completed_at: '2026-07-04T10:00:00Z' },
     { id: 'e', estado: 'pendiente', created_at: '2026-07-05T10:00:00Z' }
   ];
   const { completadas, porCobrar, cobradas, pagadas } = ordenarParaLista(ordenes);
-  assert.deepEqual(porCobrar.map(o => o.id), ['d', 'a']);
+  assert.deepEqual(completadas.map(o => o.id), ['d']);
+  assert.deepEqual(porCobrar.map(o => o.id), ['a']);
   assert.deepEqual(cobradas.map(o => o.id), ['b']);
   assert.deepEqual(pagadas.map(o => o.id), ['c']);
-  // Las ya pagadas no se repiten en "completadas" — solo quedan en su columna.
-  assert.deepEqual(completadas.map(o => o.id), ['d', 'b', 'a']);
 });
 
 test('formatearFecha regresa vacío sin fecha y texto legible con fecha', () => {

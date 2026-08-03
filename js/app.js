@@ -529,7 +529,7 @@ async function renderOrden(id, forzar = false) {
       cliente: crearPad(document.getElementById('firma-cliente'))
     };
   } else {
-    $('#select-estatus-cobro').value = o.estatus_cobro || 'por_cobrar';
+    $('#select-estatus-cobro').value = o.estatus_cobro || '';
     limpiarError('error-cobro');
   }
   actualizarVisibilidadPorRol();
@@ -695,8 +695,8 @@ $('#form-editar').addEventListener('submit', async (e) => {
 });
 
 $('#select-estatus-cobro').addEventListener('change', async (e) => {
-  const anterior = ordenActual.estatus_cobro || 'por_cobrar';
-  const nuevo = e.target.value;
+  const anterior = ordenActual.estatus_cobro || '';
+  const nuevo = e.target.value || null;
   limpiarError('error-cobro');
   try {
     ordenActual = await datos.actualizarEstatusCobro(ordenActual.id, nuevo);

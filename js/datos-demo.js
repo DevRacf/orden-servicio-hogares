@@ -85,7 +85,7 @@ export async function completarOrden(id, cierre) {
   if (!orden) throw new Error('Orden no encontrada');
   Object.assign(orden, cierre, {
     estado: 'completada',
-    estatus_cobro: 'por_cobrar',
+    estatus_cobro: null,
     completed_at: new Date().toISOString()
   });
   guardarOrdenes(ordenes);
