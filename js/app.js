@@ -17,6 +17,12 @@ let rolActual = null;
 let clientesNuevaCargados = [];
 let clientesVistaCargados = [];
 
+// Se activa en cada entrada nueva a la lista (no en un refresco de fondo) y
+// se consume en actualizarVisibilidadPorRol(), que es donde ya se sabe el
+// rol: a los técnicos no les interesa ver completadas de entrada, así que
+// esa sección arranca colapsada cada vez que vuelven a la lista.
+let colapsarCompletadasTecnico = false;
+
 const OPCIONES_CANTIDAD = Array.from({ length: 20 }, (_, i) => i + 1)
   .map(n => `<option value="${n}">${n}</option>`).join('');
 
@@ -94,6 +100,10 @@ async function obtenerRolCacheado() {
 }
 
 function actualizarVisibilidadPorRol() {
+  if (colapsarCompletadasTecnico) {
+    colapsarCompletadasTecnico = false;
+    if (rolActual === 'tecnico') $('#vista-lista .col-completada').open = false;
+  }
   $('#link-nueva-orden').classList.toggle('oculto', rolActual === 'tecnico');
   $('#link-dashboard').classList.toggle('oculto', rolActual !== 'oficina');
   $('#link-clientes').classList.toggle('oculto', rolActual !== 'oficina');
@@ -205,7 +215,10 @@ async function renderLista() {
   // ya escribió en el buscador en vez de borrarlo bajo sus dedos.
   const yaVisible = !document.getElementById('vista-lista').classList.contains('oculto');
   mostrarVista('vista-lista');
-  if (!yaVisible) $('#buscador').value = '';
+  if (!yaVisible) {
+    $('#buscador').value = '';
+    colapsarCompletadasTecnico = true;
+  }
   const hashEsperado = location.hash || '#/';
   const ordenes = await datos.listarOrdenes();
   // Si el usuario ya navegó a otra vista mientras esto cargaba, no pisar su pantalla actual.
