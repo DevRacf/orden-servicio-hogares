@@ -68,16 +68,19 @@ export const ESTATUS_COBRO = {
 
 export function ordenarParaLista(ordenes) {
   const recientesPrimero = (campo) => (a, b) => (a[campo] < b[campo] ? 1 : -1);
-  const completadas = ordenes.filter(o => o.estado === 'completada').sort(recientesPrimero('completed_at'));
+  const todasCompletadas = ordenes.filter(o => o.estado === 'completada').sort(recientesPrimero('completed_at'));
   // Completadas antes de que existiera este campo (o con algún hueco) se
   // tratan como "por cobrar" — nunca se pierden de la vista de oficina.
-  const porEstatusCobro = (estatus) => completadas.filter(o => (o.estatus_cobro || 'por_cobrar') === estatus);
+  const porEstatusCobro = (estatus) => todasCompletadas.filter(o => (o.estatus_cobro || 'por_cobrar') === estatus);
+  const pagadas = porEstatusCobro('pagada');
   return {
     pendientes: ordenes.filter(o => o.estado === 'pendiente').sort(recientesPrimero('created_at')),
-    completadas,
+    // Ya pagadas no aparecen aquí: quedan solo en la columna de Pagadas, no
+    // hay que verlas dos veces.
+    completadas: todasCompletadas.filter(o => (o.estatus_cobro || 'por_cobrar') !== 'pagada'),
     porCobrar: porEstatusCobro('por_cobrar'),
     cobradas: porEstatusCobro('cobrada'),
-    pagadas: porEstatusCobro('pagada')
+    pagadas
   };
 }
 
