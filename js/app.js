@@ -355,6 +355,81 @@ function pintarClientes(clientes) {
   $('#lista-clientes-vista').replaceChildren(...clientes.map(tarjetaCliente));
 }
 
+function filaTablaCliente(cliente) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="nombre-cliente-tabla" aria-label="Nombre"></td>
+    <td><input type="tel" class="telefono-cliente-tabla" placeholder="—" aria-label="Teléfono"></td>
+    <td class="celda-domicilio"></td>`;
+
+  const nombreInput = tr.querySelector('.nombre-cliente-tabla');
+  nombreInput.value = cliente.nombre;
+  nombreInput.addEventListener('change', async () => {
+    const texto = nombreInput.value.trim();
+    if (!texto) { nombreInput.value = cliente.nombre; return; }
+    try {
+      await datos.actualizarCliente(cliente.id, { nombre: texto });
+      cliente.nombre = texto;
+    } catch {
+      nombreInput.value = cliente.nombre;
+      alert('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    }
+  });
+
+  const telInput = tr.querySelector('.telefono-cliente-tabla');
+  telInput.value = cliente.telefono || '';
+  telInput.addEventListener('change', async () => {
+    const texto = telInput.value.trim();
+    try {
+      await datos.actualizarCliente(cliente.id, { telefono: texto || null });
+      cliente.telefono = texto;
+    } catch {
+      telInput.value = cliente.telefono || '';
+      alert('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    }
+  });
+
+  const direcciones = cliente.direcciones || [];
+  const celdaDomicilio = tr.querySelector('.celda-domicilio');
+  celdaDomicilio.replaceChildren(...(direcciones.length
+    ? direcciones.flatMap((d, i) => i === 0
+      ? [document.createTextNode(d.direccion)]
+      : [document.createElement('br'), document.createTextNode(d.direccion)])
+    : [document.createTextNode('—')]));
+
+  return tr;
+}
+
+function pintarTablaClientes(clientes) {
+  if (!clientes.length) {
+    $('#tabla-clientes-vista').innerHTML = '<p class="vacio">Sin clientes todavía</p>';
+    return;
+  }
+  $('#tabla-clientes-vista').innerHTML = `
+    <div class="tabla-scroll">
+      <table class="tabla-clientes">
+        <colgroup>
+          <col class="col-nombre"><col class="col-telefono"><col class="col-domicilio">
+        </colgroup>
+        <thead><tr><th>Nombre</th><th>Teléfono</th><th>Domicilio</th></tr></thead>
+        <tbody id="cuerpo-tabla-clientes"></tbody>
+      </table>
+    </div>`;
+  $('#cuerpo-tabla-clientes').replaceChildren(...clientes.map(filaTablaCliente));
+}
+
+let vistaClientesActual = 'tarjetas';
+let ultimosClientesFiltrados = [];
+
+// Ambas vistas se arman a partir de los mismos objetos cliente (una edición
+// en una se refleja en la otra en cuanto se cambia de vista, sin refrescar
+// desde el servidor) — solo se pinta la que está visible.
+function pintarVistaClientesActual(clientes) {
+  ultimosClientesFiltrados = clientes;
+  if (vistaClientesActual === 'tabla') pintarTablaClientes(clientes);
+  else pintarClientes(clientes);
+}
+
 async function renderClientes() {
   const yaVisible = !document.getElementById('vista-clientes').classList.contains('oculto');
   mostrarVista('vista-clientes');
@@ -363,7 +438,7 @@ async function renderClientes() {
   const clientes = await datos.listarClientes();
   if (location.hash !== hashEsperado) return;
   clientesVistaCargados = clientes;
-  pintarClientes(filtrarClientes(clientesVistaCargados, $('#buscador-clientes').value));
+  pintarVistaClientesActual(filtrarClientes(clientesVistaCargados, $('#buscador-clientes').value));
 }
 
 let rangoDashboard = '30d';
@@ -575,7 +650,17 @@ $('#vista-dashboard .selector-rango').addEventListener('click', (e) => {
 });
 
 $('#buscador-clientes').addEventListener('input', () => {
-  pintarClientes(filtrarClientes(clientesVistaCargados, $('#buscador-clientes').value));
+  pintarVistaClientesActual(filtrarClientes(clientesVistaCargados, $('#buscador-clientes').value));
+});
+
+$('#vista-clientes .selector-vista-clientes').addEventListener('click', (e) => {
+  const boton = e.target.closest('.rango-boton');
+  if (!boton) return;
+  vistaClientesActual = boton.dataset.vista;
+  document.querySelectorAll('#vista-clientes .rango-boton').forEach(b => b.classList.toggle('activo', b === boton));
+  $('#lista-clientes-vista').classList.toggle('oculto', vistaClientesActual !== 'tarjetas');
+  $('#tabla-clientes-vista').classList.toggle('oculto', vistaClientesActual !== 'tabla');
+  pintarVistaClientesActual(ultimosClientesFiltrados);
 });
 
 $('#cliente-nombre-nueva').addEventListener('input', () => {

@@ -113,9 +113,16 @@
     <!-- Vista: clientes -->
     <section id="vista-clientes" class="vista oculto">
       <a href="#/" class="volver">← Órdenes</a>
-      <h2>Clientes</h2>
+      <div class="encabezado-orden">
+        <h2>Clientes</h2>
+        <div class="selector-vista-clientes" role="group" aria-label="Vista de clientes">
+          <button type="button" data-vista="tarjetas" class="rango-boton activo">Tarjetas</button>
+          <button type="button" data-vista="tabla" class="rango-boton">Tabla</button>
+        </div>
+      </div>
       <input type="search" id="buscador-clientes" aria-label="Buscar cliente" placeholder="Buscar por nombre o teléfono" autocomplete="off">
       <div id="lista-clientes-vista"></div>
+      <div id="tabla-clientes-vista" class="oculto"></div>
     </section>
 
     <!-- Vista: nueva orden -->

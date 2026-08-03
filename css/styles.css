@@ -273,6 +273,56 @@ canvas.firma {
   color: var(--azul);
 }
 
+.selector-vista-clientes { display: flex; gap: 0.4rem; }
+
+.tabla-scroll {
+  overflow-x: auto;
+  border: 2px solid var(--azul);
+  border-radius: 12px;
+  background: var(--blanco);
+}
+table.tabla-clientes {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+/* Ancho fijo por columna: así las tres caben en pantallas angostas sin
+   scroll horizontal — el domicilio se acomoda en varias líneas en vez de
+   empujar a las demás columnas fuera de la vista. */
+table.tabla-clientes col.col-nombre { width: 32%; }
+table.tabla-clientes col.col-telefono { width: 26%; }
+table.tabla-clientes col.col-domicilio { width: 42%; }
+table.tabla-clientes th {
+  text-align: left;
+  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--gris);
+  padding: 0.6rem 0.5rem;
+  border-bottom: 2px solid var(--azul);
+}
+table.tabla-clientes td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(11, 37, 69, 0.12);
+  vertical-align: middle;
+  overflow-wrap: break-word;
+}
+table.tabla-clientes tr:last-child td { border-bottom: none; }
+table.tabla-clientes td input {
+  width: 100%;
+  margin-top: 0;
+  padding: 0.4rem 0.4rem;
+}
+table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
+
+@media (min-width: 860px) {
+  table.tabla-clientes { font-size: 0.92rem; }
+  table.tabla-clientes th { padding: 0.75rem 0.9rem; }
+  table.tabla-clientes td { padding: 0.55rem 0.9rem; }
+}
+
 .aviso-offline {
   background: var(--pendiente-fondo);
   color: var(--pendiente-texto);
