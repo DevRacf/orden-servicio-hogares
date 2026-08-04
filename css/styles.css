@@ -17,13 +17,20 @@
   --pagada-fondo: #BBF0D4;
   --pagada-texto: #0A5C3A;
   --azul-2: #13345f;
+  /* Los técnicos siempre entran desde un celular Android — Roboto es la
+     fuente que ya trae de fábrica, no hay que cargar ninguna. En escritorio
+     (oficina) esto se sobreescribe más abajo por la de Apple. */
+  --fuente: Roboto, "Segoe UI", Arial, sans-serif;
+  --superficie: #FFFFFF;
+  --separador: rgba(11, 37, 69, 0.14);
+  --sombra-elevacion: 0 1px 2px rgba(11, 37, 69, 0.08), 0 2px 8px -2px rgba(11, 37, 69, 0.16);
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   background: var(--fondo);
   color: var(--texto);
 }
@@ -38,7 +45,7 @@ body {
 }
 
 .marca {
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   font-size: 1.1rem;
   margin: 0;
   font-weight: 800;
@@ -58,7 +65,7 @@ main { max-width: 640px; margin: 0 auto; padding: 1rem; }
 
 .oculto { display: none !important; }
 
-h2, h3, h4 { font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif; font-weight: 700; }
+h2, h3, h4 { font-family: var(--fuente); font-weight: 700; }
 h2 { font-size: 1.2rem; margin: 1.2rem 0 0.6rem; }
 h3 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
 h4 { font-size: 0.92rem; margin: 1rem 0 0.2rem; color: var(--gris); }
@@ -74,10 +81,14 @@ input, textarea, select {
   padding: 0.75rem;
   font: inherit;
   font-weight: 400;
-  border: 2px solid var(--azul);
-  border-radius: 10px;
+  border: 2px solid var(--gris);
+  border-radius: 8px;
   background: var(--blanco);
   color: var(--texto);
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--azul);
+  outline: none;
 }
 
 button, .boton {
@@ -85,13 +96,13 @@ button, .boton {
   width: 100%;
   padding: 0.9rem 1rem;
   margin-top: 0.5rem;
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   font-weight: 800;
   font-size: 0.98rem;
   color: var(--azul);
   background: var(--acento);
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -104,7 +115,7 @@ button.liga {
   background: none;
   color: var(--azul);
   padding: 0.6rem 0;
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   font-weight: 700;
 }
 
@@ -136,7 +147,7 @@ button.liga.peligro { color: var(--rojo); }
   display: inline-block;
   margin-bottom: 0.5rem;
   color: var(--azul);
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   text-decoration: none;
   font-weight: 700;
 }
@@ -146,19 +157,20 @@ button.liga.peligro { color: var(--rojo); }
 
 .tarjeta {
   display: block;
-  background: var(--blanco);
-  border: 2px solid var(--azul);
-  border-radius: 12px;
+  background: var(--superficie);
+  border: 1px solid var(--separador);
+  border-radius: 14px;
+  box-shadow: var(--sombra-elevacion);
   padding: 0.9rem;
   margin-bottom: 0.7rem;
   color: inherit;
   text-decoration: none;
 }
-.tarjeta strong { font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif; }
+.tarjeta strong { font-family: var(--fuente); }
 .tarjeta > span { display: block; color: var(--gris); font-size: 0.85rem; margin-top: 0.3rem; }
 
 .estado {
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.2rem 0.6rem;
@@ -179,9 +191,9 @@ button.liga.peligro { color: var(--rojo); }
   border: 1px solid var(--azul);
 }
 
-dl { background: var(--blanco); border: 2px solid var(--azul); border-radius: 12px; padding: 0.9rem; margin: 0; }
+dl { background: var(--superficie); border: 1px solid var(--separador); border-radius: 14px; box-shadow: var(--sombra-elevacion); padding: 0.9rem; margin: 0; }
 dt {
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   font-size: 0.78rem;
   color: var(--gris);
   text-transform: uppercase;
@@ -199,9 +211,9 @@ fieldset.servicios-campo legend { font-weight: 600; font-size: 0.92rem; margin-b
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.6rem 0.8rem;
-  border: 2px solid var(--azul);
-  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  border: 1.5px solid var(--gris);
+  border-radius: 999px;
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--azul);
@@ -220,7 +232,8 @@ fieldset.servicios-campo legend { font-weight: 600; font-size: 0.92rem; margin-b
   margin-top: 0.35rem;
   min-height: auto;
   background: var(--fondo);
-  border: 2px solid var(--azul);
+  border: none;
+  border-radius: 999px;
   color: var(--azul);
 }
 
@@ -228,33 +241,75 @@ canvas.firma {
   width: 100%;
   height: 160px;
   background: var(--blanco);
-  border: 2px dashed var(--azul);
-  border-radius: 10px;
+  border: 1.5px dashed var(--gris);
+  border-radius: 12px;
   touch-action: none;
 }
 
+/* Fila con interruptor (usada para "anotar nombre en vez de firmar"): el
+   checkbox de siempre, pero dibujado como un switch — así no hay que tocar
+   el HTML ni el JS que ya escuchan su evento "change". */
 .fila-casilla {
   display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  background: var(--blanco);
-  border: 2px solid var(--azul);
-  border-radius: 10px;
-  padding: 0.7rem 0.8rem;
+  align-items: center;
+  gap: 0.7rem;
+  background: var(--superficie);
+  border: 1px solid var(--separador);
+  border-radius: 14px;
+  box-shadow: var(--sombra-elevacion);
+  padding: 0.8rem 0.9rem;
   margin-bottom: 0.7rem;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.9rem;
 }
-.fila-casilla input { margin-top: 0.15rem; width: 1.05rem; height: 1.05rem; accent-color: var(--acento); flex: none; }
+.fila-casilla span { order: 1; flex: 1; }
+.fila-casilla input[type="checkbox"] {
+  order: 2;
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 46px;
+  height: 27px;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--gris);
+  border-radius: 999px;
+  background: var(--blanco);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fila-casilla input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 19px; height: 19px;
+  border-radius: 50%;
+  background: var(--gris);
+  transition: transform 0.15s, background 0.15s, width 0.15s, height 0.15s, top 0.15s, left 0.15s;
+}
+.fila-casilla input[type="checkbox"]:checked { background: var(--acento); border-color: var(--acento); }
+.fila-casilla input[type="checkbox"]:checked::before {
+  background: var(--blanco);
+  width: 21px; height: 21px;
+  top: 1px; left: 21px;
+}
 .ayuda-chica { display: block; font-weight: 400; color: var(--gris); font-size: 0.78rem; margin-top: 0.15rem; }
 
-#buscador, #buscador-clientes { margin-top: 0.8rem; }
+#buscador, #buscador-clientes {
+  margin-top: 0.8rem;
+  border-radius: 999px;
+  border-color: var(--separador);
+  box-shadow: var(--sombra-elevacion);
+}
 
 .tarjeta-cliente {
-  background: var(--blanco);
-  border: 2px solid var(--azul);
-  border-radius: 12px;
+  background: var(--superficie);
+  border: 1px solid var(--separador);
+  border-radius: 14px;
+  box-shadow: var(--sombra-elevacion);
   padding: 0.9rem;
   margin-bottom: 0.7rem;
 }
@@ -269,7 +324,8 @@ canvas.firma {
   margin-top: 0;
   min-height: auto;
   background: var(--fondo);
-  border: 2px solid var(--azul);
+  border: none;
+  border-radius: 999px;
   color: var(--azul);
 }
 
@@ -277,9 +333,10 @@ canvas.firma {
 
 .tabla-scroll {
   overflow-x: auto;
-  border: 2px solid var(--azul);
-  border-radius: 12px;
-  background: var(--blanco);
+  border: 1px solid var(--separador);
+  border-radius: 14px;
+  box-shadow: var(--sombra-elevacion);
+  background: var(--superficie);
 }
 table.tabla-clientes {
   width: 100%;
@@ -295,7 +352,7 @@ table.tabla-clientes col.col-telefono { width: 26%; }
 table.tabla-clientes col.col-domicilio { width: 42%; }
 table.tabla-clientes th {
   text-align: left;
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -349,8 +406,9 @@ table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.65rem 0.8rem;
-  border-radius: 10px;
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  border-radius: 12px;
+  box-shadow: var(--sombra-elevacion);
+  font-family: var(--fuente);
   font-weight: 800;
   font-size: 0.9rem;
 }
@@ -403,13 +461,13 @@ table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
   min-height: auto;
   margin-top: 0;
   padding: 0.4rem 0.75rem;
-  font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fuente);
   font-weight: 700;
   font-size: 0.8rem;
   color: var(--azul);
   background: var(--blanco);
-  border: 2px solid var(--azul);
-  border-radius: 8px;
+  border: 1.5px solid var(--gris);
+  border-radius: 999px;
 }
 .rango-boton.activo { background: var(--acento); border-color: var(--acento); }
 
@@ -420,9 +478,10 @@ table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
   margin: 1rem 0 1.2rem;
 }
 .kpi {
-  background: var(--blanco);
-  border: 2px solid var(--azul);
-  border-radius: 12px;
+  background: var(--superficie);
+  border: 1px solid var(--separador);
+  border-radius: 14px;
+  box-shadow: var(--sombra-elevacion);
   padding: 0.85rem 0.95rem;
   position: relative;
   overflow: hidden;
@@ -434,7 +493,7 @@ table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
   width: 4px;
   background: var(--raya, var(--acento));
 }
-.kpi .num { font-family: 'Manrope', -apple-system, "Segoe UI", Roboto, sans-serif; font-weight: 800; font-size: 1.6rem; line-height: 1.1; }
+.kpi .num { font-family: var(--fuente); font-weight: 800; font-size: 1.6rem; line-height: 1.1; }
 .kpi .etiqueta { color: var(--gris); font-size: 0.78rem; font-weight: 600; margin-top: 0.3rem; }
 .kpi .tendencia { font-size: 0.72rem; font-weight: 700; margin-top: 0.4rem; }
 .kpi .tendencia.subio { color: var(--completada-texto); }
@@ -455,9 +514,10 @@ table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
 }
 
 .panel {
-  background: var(--blanco);
-  border: 2px solid var(--azul);
-  border-radius: 12px;
+  background: var(--superficie);
+  border: 1px solid var(--separador);
+  border-radius: 14px;
+  box-shadow: var(--sombra-elevacion);
   padding: 1rem 1.1rem 1.2rem;
 }
 .panel h3 { margin: 0; font-size: 0.95rem; }
