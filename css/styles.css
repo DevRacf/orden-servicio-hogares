@@ -110,7 +110,7 @@ button.liga {
 
 .acciones-encabezado { display: flex; align-items: center; gap: 0.9rem; }
 
-.encabezado .liga { color: var(--acento); }
+.encabezado .liga { color: var(--acento); text-decoration: none; }
 
 button.liga.peligro { color: var(--rojo); }
 
@@ -493,3 +493,87 @@ table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
 .fila-cobrar .dias { font-weight: 700; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 99px; white-space: nowrap; }
 .fila-cobrar .dias.reciente { background: var(--cobrar-fondo); color: var(--cobrar-texto); }
 .fila-cobrar .dias.viejo { background: var(--pendiente-fondo); color: var(--rojo); }
+
+/* ======================================================================
+   Escritorio (≥860px): la oficina casi siempre entra desde una compu, así
+   que a ese ancho el encabezado se convierte en una barra lateral fija y
+   las tarjetas/paneles se suavizan al estilo de una app de escritorio.
+   Los técnicos (celular, angosto) no ven ninguno de estos cambios — todo
+   lo de abajo vive detrás de min-width: 860px.
+   ====================================================================== */
+.icono-nav { display: none; }
+#link-ordenes.solo-escritorio { display: none; }
+
+@media (min-width: 860px) {
+  :root {
+    --fuente-escritorio: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    --borde-suave: rgba(11, 37, 69, 0.12);
+    --sombra-tarjeta: 0 1px 2px rgba(11, 37, 69, 0.05), 0 6px 16px -10px rgba(11, 37, 69, 0.2);
+  }
+
+  body, .encabezado, main { font-family: var(--fuente-escritorio); }
+  h2, h3, h4, .marca, button, .boton, button.liga, .volver,
+  .tarjeta strong, .estado, dt, .rango-boton, table.tabla-clientes th,
+  .col-cobro summary, .kpi .num { font-family: var(--fuente-escritorio); }
+
+  body {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+  .encabezado {
+    grid-column: 1; grid-row: 1 / -1;
+    flex-direction: column; align-items: stretch; justify-content: flex-start;
+    gap: 0.3rem;
+    width: 240px; padding: 1.4rem 1rem;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    border-right: 1px solid var(--borde-suave);
+  }
+  .marca { font-size: 1.05rem; margin-bottom: 1.6rem; padding: 0 0.5rem; }
+  #aviso-offline { grid-column: 2; grid-row: 1; }
+  main { grid-column: 2; grid-row: 2; padding: 2.2rem 2.6rem; }
+
+  .acciones-encabezado { flex-direction: column; align-items: stretch; gap: 0.15rem; }
+  .encabezado .liga {
+    display: flex; align-items: center; gap: 0.65rem;
+    color: var(--blanco); font-weight: 600; font-size: 0.92rem;
+    padding: 0.55rem 0.65rem; border-radius: 8px;
+  }
+  .encabezado .liga:hover { background: rgba(255, 255, 255, 0.08); }
+  .icono-nav { display: block; width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  #link-ordenes.solo-escritorio { display: flex; }
+  #btn-salir { margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.14); padding-top: 0.9rem; }
+
+  /* Resalta el destino activo comparando el hash actual con cada liga —
+     lo hace app.js (ver actualizarNavActiva) agregando/quitando esta clase. */
+  .encabezado .liga.activo { background: var(--acento); color: var(--azul); }
+
+  main:has(#vista-lista:not(.oculto)),
+  main:has(#vista-dashboard:not(.oculto)),
+  main:has(#vista-clientes:not(.oculto)) { max-width: 1280px; }
+
+  /* Tarjetas y paneles: de borde grueso "táctil" a borde fino + sombra,
+     como una tarjeta de macOS en vez de un botón para dedo. */
+  .tarjeta, .tarjeta-cliente, .panel, .kpi, .tabla-scroll, .cuerpo-col .tarjeta {
+    border: 1px solid var(--borde-suave);
+    box-shadow: var(--sombra-tarjeta);
+  }
+  .tarjeta, .tarjeta-cliente, .panel, .kpi { border-radius: 14px; }
+  .tarjeta:hover { box-shadow: 0 2px 4px rgba(11,37,69,0.06), 0 10px 24px -12px rgba(11,37,69,0.28); }
+
+  .col-cobro summary { font-weight: 700; }
+  .cuerpo-col { border-radius: 0 0 14px 14px; box-shadow: var(--sombra-tarjeta); border: 1px solid var(--borde-suave); border-top: none; }
+  .col-cobro summary { border-radius: 14px 14px 0 0; }
+
+  #buscador, #buscador-clientes {
+    border-radius: 99px; border-width: 1px; border-color: var(--borde-suave);
+    background: var(--blanco); box-shadow: var(--sombra-tarjeta);
+    padding: 0.65rem 1.1rem;
+  }
+
+  .rango-boton, table.tabla-clientes th { border-color: var(--borde-suave); }
+  .rango-boton { border-width: 1px; border-radius: 99px; }
+
+  button, .boton { border-radius: 8px; }
+}

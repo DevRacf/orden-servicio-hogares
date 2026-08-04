@@ -105,6 +105,16 @@ async function obtenerRolCacheado() {
   return rolActual;
 }
 
+// Resalta el destino activo en la barra lateral (solo se ve en escritorio,
+// pero no hace daño calcularlo siempre). "Órdenes" cuenta como activo tanto
+// en la lista como al ver o crear una orden — son parte de la misma sección.
+function actualizarNavActiva(hash) {
+  const esOrdenes = hash === '#/' || /^#\/orden\//.test(hash) || hash === '#/nueva';
+  $('#link-ordenes')?.classList.toggle('activo', esOrdenes);
+  $('#link-clientes')?.classList.toggle('activo', hash === '#/clientes');
+  $('#link-dashboard')?.classList.toggle('activo', hash === '#/dashboard');
+}
+
 function actualizarVisibilidadPorRol() {
   if (colapsarCompletadasTecnico) {
     colapsarCompletadasTecnico = false;
@@ -132,12 +142,15 @@ async function rutear() {
       $('#btn-salir').classList.add('oculto');
       $('#link-dashboard').classList.add('oculto');
       $('#link-clientes').classList.add('oculto');
+      $('#link-ordenes').classList.add('oculto');
       mostrarVista('vista-login');
       rolActual = null; // se vuelve a resolver en el siguiente login
       return;
     }
     $('#btn-salir').classList.remove('oculto');
+    $('#link-ordenes').classList.remove('oculto');
     const hash = location.hash || '#/';
+    actualizarNavActiva(hash);
     if (hash === '#/nueva') {
       // Crear órdenes ya requería internet antes de este cambio (igual que
       // iniciar sesión); esperar el rol aquí no le quita nada al modo offline,
