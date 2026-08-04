@@ -654,6 +654,18 @@ $('#buscador').addEventListener('input', () => {
   pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
 });
 
+// En celular, Pendientes/Completadas se navegan con este segmentado en vez
+// de ver las dos secciones apiladas; en escritorio no se ve (sigue el
+// kanban de columnas lado a lado, sin este control).
+$('.segmentado-lista').addEventListener('click', (e) => {
+  const boton = e.target.closest('[data-segmento-lista]');
+  if (!boton) return;
+  document.querySelectorAll('.segmentado-lista .rango-boton').forEach(b => b.classList.toggle('activo', b === boton));
+  const activo = boton.dataset.segmentoLista;
+  $('#vista-lista .col-pendiente').classList.toggle('oculto-en-movil', activo !== 'pendientes');
+  $('#vista-lista .col-completada').classList.toggle('oculto-en-movil', activo !== 'completadas');
+});
+
 $('#vista-dashboard .selector-rango').addEventListener('click', (e) => {
   const boton = e.target.closest('.rango-boton');
   if (!boton) return;

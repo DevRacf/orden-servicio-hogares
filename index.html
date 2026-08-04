@@ -46,11 +46,15 @@
     <section id="vista-lista" class="vista oculto">
       <a href="#/nueva" class="boton" id="link-nueva-orden">+ Nueva orden</a>
       <input type="search" id="buscador" aria-label="Buscar por cliente o folio" placeholder="Buscar por cliente o folio" autocomplete="off">
+      <div class="segmentado-lista solo-movil" role="group" aria-label="Estado de las órdenes">
+        <button type="button" data-segmento-lista="pendientes" class="rango-boton activo">Pendientes</button>
+        <button type="button" data-segmento-lista="completadas" class="rango-boton">Completadas</button>
+      </div>
       <details class="col-cobro col-pendiente" open>
         <summary><span class="titulo-col">Pendientes</span><span class="cuenta" id="cuenta-pendientes">0</span></summary>
         <div id="lista-pendientes" class="cuerpo-col"></div>
       </details>
-      <details class="col-cobro col-completada" open>
+      <details class="col-cobro col-completada oculto-en-movil" open>
         <summary><span class="titulo-col">Completadas</span><span class="cuenta" id="cuenta-completadas">0</span></summary>
         <div id="lista-completadas" class="cuerpo-col"></div>
       </details>

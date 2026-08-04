@@ -396,6 +396,20 @@ table.tabla-clientes .celda-domicilio { color: var(--texto); line-height: 1.4; }
    como columnas de kanban lado a lado. */
 #vista-lista > details.col-cobro { margin: 1.2rem 0 0.6rem; }
 
+.solo-movil { display: block; }
+.segmentado-lista { display: flex; gap: 0.4rem; margin: 1.2rem 0 0.6rem; }
+.segmentado-lista .rango-boton { flex: 1; }
+
+@media (max-width: 859px) {
+  /* Pendientes/Completadas se navegan con los botones de arriba, no como
+     dos barras apiladas — solo se ve la sección activa. */
+  #vista-lista > details.col-cobro.oculto-en-movil { display: none; }
+}
+
+@media (min-width: 860px) {
+  .solo-movil { display: none; }
+}
+
 .kanban-cobros { display: flex; flex-direction: column; gap: 0.6rem; }
 
 .col-cobro summary {
