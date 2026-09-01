@@ -771,6 +771,9 @@ $('#btn-editar-orden').addEventListener('click', async () => {
   tecnicos.add(o.tecnico); // por si el técnico asignado ya no está activo
   $('#select-tecnico-editar').innerHTML = [...tecnicos]
     .map(t => `<option ${t === o.tecnico ? 'selected' : ''}>${escapar(t)}</option>`).join('');
+  const esCompletada = o.estado === 'completada';
+  $('#campo-trabajo-realizado-editar').classList.toggle('oculto', !esCompletada);
+  form.trabajo_realizado.value = esCompletada ? (o.trabajo_realizado || '') : '';
   $('#filas-materiales-editar').replaceChildren(...filasMateriales(o.materiales));
   $('#filas-materiales-cliente-editar').replaceChildren(...filasMateriales(o.materiales_cliente));
   limpiarError('error-editar');
@@ -800,6 +803,12 @@ $('#form-editar').addEventListener('submit', async (e) => {
   d.servicios = form.getAll('servicios');
   const v = validarNuevaOrden(d);
   if (!v.ok) return mostrarError('error-editar', v.errores);
+  if (ordenActual.estado === 'completada') {
+    d.trabajo_realizado = d.trabajo_realizado?.trim();
+    if (!d.trabajo_realizado) return mostrarError('error-editar', 'Describe el trabajo realizado');
+  } else {
+    delete d.trabajo_realizado;
+  }
   limpiarError('error-editar');
   d.materiales = limpiarMateriales(leerFilasMateriales('filas-materiales-editar'));
   d.materiales_cliente = limpiarMateriales(leerFilasMateriales('filas-materiales-cliente-editar'));
