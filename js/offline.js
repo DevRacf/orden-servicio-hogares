@@ -41,40 +41,47 @@ function conTiempoLimite(promesa, ms = 8000) {
   ]);
 }
 
-let sincronizando = false;
+// Si ya hay una sincronización en curso, un segundo llamador espera la MISMA
+// promesa en vez de recibir un no-op inmediato — si no, obtenerOrden()/
+// listarOrdenes() podrían leer el servidor antes de que el cierre en curso
+// terminara de guardarse ahí.
+let sincronizacionEnCurso = null;
 
 // Reenvía los cierres encolados, en orden. Un fallo detiene el intento (se
 // reintenta en la siguiente oportunidad); la cola nunca se descarta.
-export async function sincronizar() {
-  if (sincronizando || !navigator.onLine) return;
-  sincronizando = true;
-  try {
-    // Se recorre una foto de los pendientes al empezar, pero cada escritura
-    // relee la cola justo antes de guardar (no arrastra la foto vieja) — así
-    // no se pierde un cierre que completarOrden() haya agregado en paralelo
-    // mientras esta sincronización seguía en curso.
-    for (const item of [...leerCola()]) {
-      try {
-        // Se manda la fecha real de cierre (cuando el técnico terminó, no
-        // cuando volvió la señal) para que datos-supabase.js la respete.
-        await conTiempoLimite(sb.completarOrden(item.ordenId, {
-          ...item.cierre,
-          completed_at: new Date(item.timestamp).toISOString()
-        }));
-        guardarCola(quitarDeCola(leerCola(), item.ordenId));
-      } catch (err) {
-        console.error('No se pudo sincronizar el cierre de', item.ordenId, err);
-        // La causa típica es señal débil (mismo conTiempoLimite que el resto);
-        // se avisa igual aunque no se distinga la causa exacta, para que el
-        // letrero no se quede apagado durante una sincronización en segundo
-        // plano que en realidad sigue fallando.
-        avisarFalloDeRed();
-        break;
+export function sincronizar() {
+  if (!navigator.onLine) return Promise.resolve();
+  if (sincronizacionEnCurso) return sincronizacionEnCurso;
+  sincronizacionEnCurso = (async () => {
+    try {
+      // Se recorre una foto de los pendientes al empezar, pero cada escritura
+      // relee la cola justo antes de guardar (no arrastra la foto vieja) — así
+      // no se pierde un cierre que completarOrden() haya agregado en paralelo
+      // mientras esta sincronización seguía en curso.
+      for (const item of [...leerCola()]) {
+        try {
+          // Se manda la fecha real de cierre (cuando el técnico terminó, no
+          // cuando volvió la señal) para que datos-supabase.js la respete.
+          await conTiempoLimite(sb.completarOrden(item.ordenId, {
+            ...item.cierre,
+            completed_at: new Date(item.timestamp).toISOString()
+          }));
+          guardarCola(quitarDeCola(leerCola(), item.ordenId));
+        } catch (err) {
+          console.error('No se pudo sincronizar el cierre de', item.ordenId, err);
+          // La causa típica es señal débil (mismo conTiempoLimite que el resto);
+          // se avisa igual aunque no se distinga la causa exacta, para que el
+          // letrero no se quede apagado durante una sincronización en segundo
+          // plano que en realidad sigue fallando.
+          avisarFalloDeRed();
+          break;
+        }
       }
+    } finally {
+      sincronizacionEnCurso = null;
     }
-  } finally {
-    sincronizando = false;
-  }
+  })();
+  return sincronizacionEnCurso;
 }
 
 export async function listarOrdenes() {
@@ -94,6 +101,11 @@ export async function listarOrdenes() {
 
 export async function obtenerOrden(id) {
   try {
+    // Sin esto, reabrir una orden que se cerró sin conexión podía traer del
+    // servidor la versión vieja "pendiente" (el cierre encolado aún no
+    // llegaba) justo antes de que la sincronización la borrara de la cola,
+    // mostrando el formulario vacío como si lo llenado se hubiera perdido.
+    await sincronizar();
     const orden = await conTiempoLimite(sb.obtenerOrden(id));
     if (orden) {
       const cache = leerCache();
