@@ -77,11 +77,11 @@ export async function crearOrden(datos) {
 }
 
 // Solo oficina puede llamar esto (lo impone la política RLS "actualizar
-// ordenes solo oficina"); el filtro por estado evita pisar una orden que ya
-// se haya completado mientras se editaba.
+// ordenes solo oficina"); funciona en cualquier estado, pendiente o
+// completada.
 export async function actualizarOrden(id, cambios) {
   const { data, error } = await obtenerCliente()
-    .from('ordenes').update(cambios).eq('id', id).eq('estado', 'pendiente').select().single();
+    .from('ordenes').update(cambios).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }

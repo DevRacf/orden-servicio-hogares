@@ -124,7 +124,7 @@ function actualizarVisibilidadPorRol() {
   $('#link-dashboard').classList.toggle('oculto', rolActual !== 'oficina');
   $('#link-clientes').classList.toggle('oculto', rolActual !== 'oficina');
   $('#seccion-cobros').classList.toggle('oculto', rolActual !== 'oficina');
-  const puedeEditar = ordenActual?.estado === 'pendiente' && rolActual === 'oficina'
+  const puedeEditar = !!ordenActual && rolActual === 'oficina'
     && $('#form-editar').classList.contains('oculto');
   $('#btn-editar-orden').classList.toggle('oculto', !puedeEditar);
   const puedeVerCobro = ordenActual?.estado === 'completada' && rolActual === 'oficina';
