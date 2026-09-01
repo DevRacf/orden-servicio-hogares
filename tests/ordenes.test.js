@@ -100,6 +100,19 @@ test('ordenarParaLista separa por estado con las más recientes primero', () => 
   assert.deepEqual(completadas.map(o => o.id), ['d', 'a']);
 });
 
+test('ordenarParaLista pone las pendientes con prioridad primero, de menor a mayor', () => {
+  const ordenes = [
+    { id: 'a', estado: 'pendiente', created_at: '2026-07-05T10:00:00Z' },
+    { id: 'b', estado: 'pendiente', created_at: '2026-07-01T10:00:00Z', prioridad: 2 },
+    { id: 'c', estado: 'pendiente', created_at: '2026-07-03T10:00:00Z', prioridad: 1 },
+    { id: 'd', estado: 'pendiente', created_at: '2026-07-06T10:00:00Z' }
+  ];
+  const { pendientes } = ordenarParaLista(ordenes);
+  // c y b (con prioridad, 1 antes que 2) van primero; d y a (sin prioridad)
+  // van después, en su orden habitual de más reciente primero.
+  assert.deepEqual(pendientes.map(o => o.id), ['c', 'b', 'd', 'a']);
+});
+
 test('ordenarParaLista agrupa las completadas por estatus de cobro, sin duplicar ninguna', () => {
   const ordenes = [
     { id: 'a', estado: 'completada', completed_at: '2026-07-01T10:00:00Z', estatus_cobro: 'por_cobrar' },

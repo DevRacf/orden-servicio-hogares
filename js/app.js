@@ -202,9 +202,26 @@ function escapar(texto) {
   return d.innerHTML;
 }
 
+// Solo en pendientes tiene sentido un orden de trabajo manual. Oficina puede
+// asignarlo (número aparte del folio, indica qué se atiende primero); a
+// cualquier otro rol que ya tenga uno asignado se le muestra de solo lectura
+// para que sepa el orden, sin poder cambiarlo.
+function prioridadTarjeta(o) {
+  if (o.estado !== 'pendiente') return '';
+  if (rolActual === 'oficina') {
+    return `<input type="number" class="prioridad-orden" min="1" step="1" inputmode="numeric"
+      data-id="${o.id}" value="${o.prioridad ?? ''}" placeholder="#"
+      aria-label="Orden de trabajo de ${escapar(o.folio)}" title="Orden de trabajo (solo oficina)">`;
+  }
+  return o.prioridad
+    ? `<span class="prioridad-etiqueta" title="Orden de trabajo asignado por oficina">#${o.prioridad}</span>`
+    : '';
+}
+
 function tarjetaOrden(o) {
   const etiquetas = etiquetasServicios(o.servicios).map(e => `<span class="etiqueta">${escapar(e)}</span>`).join('');
   return `<a class="tarjeta" href="#/orden/${o.id}">
+    ${prioridadTarjeta(o)}
     <strong>${escapar(o.folio)}</strong> · ${escapar(o.cliente_nombre)}${o.porEnviar ? ' <span class="estado por-enviar">por enviar</span>' : ''}
     <div class="etiquetas-servicio">${etiquetas}</div>
     <span>${escapar(o.tecnico)}</span>
@@ -664,6 +681,31 @@ $('.segmentado-lista').addEventListener('click', (e) => {
   const activo = boton.dataset.segmentoLista;
   $('#vista-lista .col-pendiente').classList.toggle('oculto-en-movil', activo !== 'pendientes');
   $('#vista-lista .col-completada').classList.toggle('oculto-en-movil', activo !== 'completadas');
+});
+
+// El input de prioridad vive dentro de la tarjeta, que es un <a> a la orden;
+// sin esto, tocarlo también navegaría a esa orden.
+$('#lista-pendientes').addEventListener('click', (e) => {
+  if (e.target.closest('.prioridad-orden')) e.stopPropagation();
+});
+
+$('#lista-pendientes').addEventListener('change', async (e) => {
+  const input = e.target.closest('.prioridad-orden');
+  if (!input) return;
+  const id = input.dataset.id;
+  const n = Math.trunc(Number(input.value));
+  const prioridad = input.value.trim() && Number.isFinite(n) && n > 0 ? n : null;
+  input.disabled = true;
+  try {
+    await datos.actualizarOrden(id, { prioridad });
+    ordenesCargadas = ordenesCargadas.map(o => (o.id === id ? { ...o, prioridad } : o));
+    pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
+  } catch {
+    alert('No se pudo guardar el orden de trabajo. Revisa tu conexión e intenta de nuevo.');
+    pintarListas(filtrarOrdenes(ordenesCargadas, $('#buscador').value));
+  } finally {
+    input.disabled = false;
+  }
 });
 
 $('#vista-dashboard .selector-rango').addEventListener('click', (e) => {

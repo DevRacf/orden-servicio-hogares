@@ -68,6 +68,14 @@ export const ESTATUS_COBRO = {
 
 export function ordenarParaLista(ordenes, rol) {
   const recientesPrimero = (campo) => (a, b) => (a[campo] < b[campo] ? 1 : -1);
+  // Las que oficina ya priorizó van primero, de menor a mayor número; el
+  // resto conserva el orden de siempre (más recientes primero), al final.
+  const porPrioridad = (a, b) => {
+    if (a.prioridad != null && b.prioridad != null) return a.prioridad - b.prioridad;
+    if (a.prioridad != null) return -1;
+    if (b.prioridad != null) return 1;
+    return recientesPrimero('created_at')(a, b);
+  };
   const todasCompletadas = ordenes.filter(o => o.estado === 'completada').sort(recientesPrimero('completed_at'));
   const porEstatusCobro = (estatus) => todasCompletadas.filter(o => o.estatus_cobro === estatus);
   // Las columnas de cobro son solo de oficina — los técnicos nunca las ven,
@@ -82,7 +90,7 @@ export function ordenarParaLista(ordenes, rol) {
     // sola sección — nunca se duplica entre completadas/por cobrar/cobrada/pagada.
     : todasCompletadas.filter(o => !o.estatus_cobro);
   return {
-    pendientes: ordenes.filter(o => o.estado === 'pendiente').sort(recientesPrimero('created_at')),
+    pendientes: ordenes.filter(o => o.estado === 'pendiente').sort(porPrioridad),
     completadas,
     porCobrar: porEstatusCobro('por_cobrar'),
     cobradas: porEstatusCobro('cobrada'),

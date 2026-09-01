@@ -168,6 +168,35 @@ button.liga.peligro { color: var(--rojo); }
 }
 .tarjeta strong { font-family: var(--fuente); }
 .tarjeta > span { display: block; color: var(--gris); font-size: 0.85rem; margin-top: 0.3rem; }
+.tarjeta > span.prioridad-etiqueta {
+  display: inline-block;
+  margin-top: 0;
+  color: var(--blanco);
+  font-size: 0.8rem;
+}
+
+.prioridad-orden {
+  width: 2.8rem;
+  margin-right: 0.5rem;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid var(--separador);
+  border-radius: 8px;
+  font-weight: 700;
+  font-family: var(--fuente);
+  text-align: center;
+  vertical-align: middle;
+}
+.prioridad-etiqueta {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--acento);
+  color: var(--blanco);
+  font-weight: 700;
+  font-size: 0.8rem;
+  vertical-align: middle;
+}
 
 .estado {
   font-family: var(--fuente);
