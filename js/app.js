@@ -684,9 +684,13 @@ $('.segmentado-lista').addEventListener('click', (e) => {
 });
 
 // El input de prioridad vive dentro de la tarjeta, que es un <a> a la orden;
-// sin esto, tocarlo también navegaría a esa orden.
+// sin preventDefault() aquí, tocarlo igual dispara la navegación del enlace
+// (stopPropagation por sí solo no cancela esa acción por default).
 $('#lista-pendientes').addEventListener('click', (e) => {
-  if (e.target.closest('.prioridad-orden')) e.stopPropagation();
+  if (e.target.closest('.prioridad-orden')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 });
 
 $('#lista-pendientes').addEventListener('change', async (e) => {
