@@ -55,9 +55,21 @@ export async function listarTecnicos() {
   return data.map(t => t.nombre);
 }
 
+// Todo menos firma_tecnico/firma_cliente: son imágenes en base64 (decenas
+// de KB cada una) que la lista nunca muestra, y multiplicadas por todas las
+// órdenes hacen lenta la carga con señal débil y pueden llenar el
+// almacenamiento local donde se guarda la copia de respaldo sin internet.
+// Se piden completas al abrir una orden (obtenerOrden) o generar su PDF.
+const COLUMNAS_LISTA = [
+  'id', 'folio', 'estado', 'created_at', 'cliente_nombre', 'cliente_telefono',
+  'cliente_direccion', 'tipo_cliente', 'servicios', 'descripcion', 'tecnico',
+  'trabajo_realizado', 'materiales', 'materiales_cliente', 'autoriza_nombre',
+  'completed_at', 'estatus_cobro', 'prioridad'
+].join(', ');
+
 export async function listarOrdenes() {
   const { data, error } = await obtenerCliente()
-    .from('ordenes').select('*');
+    .from('ordenes').select(COLUMNAS_LISTA);
   if (error) throw error;
   return data;
 }

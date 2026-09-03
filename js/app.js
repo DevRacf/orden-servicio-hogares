@@ -967,6 +967,13 @@ window.addEventListener('fallo-red-detectado', () => {
   actualizarAvisoConexion();
   setTimeout(actualizarAvisoConexion, VENTANA_AVISO_MS + 100);
 });
+// Un cierre guardado sin conexión que el servidor termina rechazando (no por
+// señal débil, sino porque ya no aplica: alguien más completó o borró esa
+// orden mientras tanto) no se puede reintentar solo — se descarta y hay que
+// avisar para que alguien lo revise a mano.
+window.addEventListener('cierre-descartado', (e) => {
+  alert(`No se pudo guardar el cierre de la orden ${e.detail.folio}, hecho sin conexión: el servidor lo rechazó (${e.detail.error}). Probablemente alguien más ya la completó o la borró. Avisa a oficina para revisarla — esto no se va a reintentar solo.`);
+});
 actualizarAvisoConexion();
 
 // Al arrancar la app también se reenvía lo encolado (p. ej. si la señal volvió

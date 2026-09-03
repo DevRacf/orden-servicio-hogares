@@ -47,8 +47,21 @@ function conTiempoLimite(promesa, ms = 8000) {
 // terminara de guardarse ahí.
 let sincronizacionEnCurso = null;
 
-// Reenvía los cierres encolados, en orden. Un fallo detiene el intento (se
-// reintenta en la siguiente oportunidad); la cola nunca se descarta.
+// Un cierre que el servidor rechaza de plano (no por señal débil, sino p. ej.
+// porque alguien más ya completó o borró esa orden) nunca va a pasar sin
+// importar cuántas veces se reintente. Antes eso detenía la cola entera para
+// siempre, atorando también los cierres de otras órdenes que sí iban a poder
+// enviarse. Se avisa aparte para que alguien lo revise a mano.
+function avisarCierreDescartado(ordenId, err) {
+  const folio = (leerCache() || []).find(o => o.id === ordenId)?.folio || ordenId;
+  window.dispatchEvent(new CustomEvent('cierre-descartado', {
+    detail: { ordenId, folio, error: String(err?.message || err) }
+  }));
+}
+
+// Reenvía los cierres encolados, en orden. Un fallo de red detiene el intento
+// (se reintenta en la siguiente oportunidad, la cola no se toca); un rechazo
+// del servidor para un cierre en concreto lo descarta y sigue con los demás.
 export function sincronizar() {
   if (!navigator.onLine) return Promise.resolve();
   if (sincronizacionEnCurso) return sincronizacionEnCurso;
@@ -69,12 +82,12 @@ export function sincronizar() {
           guardarCola(quitarDeCola(leerCola(), item.ordenId));
         } catch (err) {
           console.error('No se pudo sincronizar el cierre de', item.ordenId, err);
-          // La causa típica es señal débil (mismo conTiempoLimite que el resto);
-          // se avisa igual aunque no se distinga la causa exacta, para que el
-          // letrero no se quede apagado durante una sincronización en segundo
-          // plano que en realidad sigue fallando.
-          avisarFalloDeRed();
-          break;
+          if (esFalloDeRed(err)) {
+            avisarFalloDeRed();
+            break;
+          }
+          guardarCola(quitarDeCola(leerCola(), item.ordenId));
+          avisarCierreDescartado(item.ordenId, err);
         }
       }
     } finally {
