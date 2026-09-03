@@ -929,8 +929,13 @@ $('#form-completar').addEventListener('submit', async (e) => {
   boton.disabled = true;
   try {
     ordenActual = await datos.completarOrden(ordenActual.id, cierre);
-  } catch {
-    return mostrarError('error-completar', 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  } catch (err) {
+    // sinEspacio: no es un problema de señal (js/offline.js), sino que ya no
+    // hay lugar en el teléfono para guardar el cierre sin conexión — esperar
+    // a tener señal no lo arregla, hay que liberar espacio primero.
+    return mostrarError('error-completar', err?.sinEspacio
+      ? err.message
+      : 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
   } finally {
     boton.disabled = false;
   }

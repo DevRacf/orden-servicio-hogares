@@ -13,6 +13,31 @@ function guardarCache(ordenes) { localStorage.setItem(LLAVE_CACHE, JSON.stringif
 function leerCola() { return JSON.parse(localStorage.getItem(LLAVE_COLA) || '[]'); }
 function guardarCola(cola) { localStorage.setItem(LLAVE_COLA, JSON.stringify(cola)); }
 
+function esErrorDeEspacio(err) {
+  return err && (err.name === 'QuotaExceededError' || err.code === 22 || err.code === 1014);
+}
+
+// La cola de cierres (lo que el técnico ya trabajó) es lo que de verdad no
+// se puede perder; la caché de lectura es solo un respaldo prescindible para
+// ver órdenes sin conexión. Si el teléfono ya no tiene espacio, se vacía esa
+// caché primero para hacerle lugar al cierre antes de rendirse.
+function guardarColaOLiberarEspacio(cola) {
+  try {
+    guardarCola(cola);
+    return true;
+  } catch (err) {
+    if (!esErrorDeEspacio(err)) throw err;
+  }
+  try { localStorage.removeItem(LLAVE_CACHE); } catch { /* nada que liberar */ }
+  try {
+    guardarCola(cola);
+    return true;
+  } catch (err) {
+    if (!esErrorDeEspacio(err)) throw err;
+    return false;
+  }
+}
+
 // Distingue "no hay conexión" de un error del servidor: solo los fallos de
 // red van a la caché/cola; los demás suben al llamador como siempre.
 function esFalloDeRed(err) {
@@ -147,14 +172,21 @@ export async function completarOrden(id, cierre) {
     orden = await conTiempoLimite(sb.completarOrden(id, cierre));
   } catch (err) {
     if (!esFalloDeRed(err)) throw err;
-    avisarFalloDeRed();
     // Caso aceptado: si esto marcó "tiempo agotado" pero el guardado en el
     // servidor en realidad sí llegó a completarse un instante después, se
     // reenviará igual al sincronizar — mismos datos, misma orden, solo con
     // completed_at unos segundos distinto al de la primera escritura. No hay
     // pérdida de información del técnico ni del cliente, solo ese margen.
     const cola = agregarACola(leerCola(), id, cierre, Date.now());
-    guardarCola(cola);
+    if (!guardarColaOLiberarEspacio(cola)) {
+      // Ni liberando la caché de lectura hubo espacio: esto sí se pierde si
+      // no se libera espacio en el teléfono — muy distinto de "sin señal"
+      // (esperar a tener señal no lo va a arreglar), así que se avisa aparte.
+      const error = new Error('No hay espacio en el teléfono para guardar este cierre sin conexión. Libera espacio (fotos, apps) e inténtalo de nuevo.');
+      error.sinEspacio = true;
+      throw error;
+    }
+    avisarFalloDeRed();
     const cache = leerCache() || [];
     return aplicarCierresPendientes(cache, cola).find(o => o.id === id)
       || aplicarCierresPendientes([{ id, estado: 'pendiente' }], cola)[0];

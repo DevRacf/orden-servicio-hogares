@@ -1,8 +1,23 @@
 // Service worker: guarda la app en el dispositivo para que abra sin internet.
-// - Archivos locales: red primero (los deploys nuevos llegan solos), caché de respaldo.
-// - CDN y fuentes: caché primero (URLs versionadas que no cambian).
+// - Archivos locales: red primero (los deploys nuevos llegan solos), con
+//   límite de tiempo — con una barra de señal la petición no falla, se
+//   cuelga, y sin el límite la app se queda esperando en blanco en vez de
+//   caer a la copia guardada.
+// - CDN y fuentes: caché primero para no esperar la red, pero revisando
+//   siempre en segundo plano — esas URLs son por versión mayor (@2, @4), no
+//   por versión exacta, así que sí pueden cambiar de contenido con el tiempo.
 // - *.supabase.co nunca se intercepta: su fallo es lo que activa js/offline.js.
 const CACHE = 'orden-servicio-v2';
+
+function conTiempoLimite(promesa, ms) {
+  return new Promise((resolve, reject) => {
+    const vencido = setTimeout(() => reject(new Error('tiempo agotado de red')), ms);
+    promesa.then(
+      (v) => { clearTimeout(vencido); resolve(v); },
+      (err) => { clearTimeout(vencido); reject(err); }
+    );
+  });
+}
 
 const PRECARGA = [
   '.',
@@ -42,15 +57,24 @@ self.addEventListener('fetch', (e) => {
   };
 
   if (url.origin === self.location.origin) {
-    // Red primero: con internet siempre la versión más reciente.
+    // Red primero: con internet siempre la versión más reciente. Si la
+    // petición de todas formas llega tarde (después del límite), su
+    // respuesta se sigue guardando para la próxima vez.
+    const peticionRed = fetch(e.request).then(guardarCopia);
     e.respondWith(
-      fetch(e.request).then(guardarCopia)
+      conTiempoLimite(peticionRed, 5000)
         .catch(() => caches.match(e.request, { ignoreSearch: true }))
     );
   } else {
-    // CDN y fuentes: caché primero.
+    // CDN y fuentes: se sirve la copia guardada al toque si existe (no
+    // bloquea la carga), y en paralelo se revisa la red por si el contenido
+    // cambió — así la próxima carga ya tiene lo más nuevo, sin depender de
+    // subir el nombre de CACHE a mano cada vez que una librería se actualiza.
     e.respondWith(
-      caches.match(e.request).then(enCache => enCache || fetch(e.request).then(guardarCopia))
+      caches.match(e.request).then((enCache) => {
+        const actualizacion = fetch(e.request).then(guardarCopia).catch(() => enCache);
+        return enCache || actualizacion;
+      })
     );
   }
 });
