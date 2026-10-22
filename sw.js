@@ -4,8 +4,11 @@
 //   cuelga, y sin el límite la app se queda esperando en blanco en vez de
 //   caer a la copia guardada.
 // - CDN y fuentes: caché primero para no esperar la red, pero revisando
-//   siempre en segundo plano — esas URLs son por versión mayor (@2, @4), no
-//   por versión exacta, así que sí pueden cambiar de contenido con el tiempo.
+//   siempre en segundo plano — @supabase/supabase-js y signature_pad son por
+//   versión mayor (@2, @4), no por versión exacta, así que sí pueden cambiar
+//   de contenido con el tiempo. jsPDF sí va fijo a una versión exacta
+//   (4.2.1): las anteriores (hasta la 2.x que se usaba aquí) tienen varias
+//   fallas de seguridad conocidas ya corregidas en esta.
 // - *.supabase.co nunca se intercepta: su fallo es lo que activa js/offline.js.
 const CACHE = 'orden-servicio-v2';
 
@@ -28,7 +31,7 @@ const PRECARGA = [
   'js/ordenes.js', 'js/firma.js', 'js/pdf.js', 'js/logo.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
   'https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/jspdf@2/dist/jspdf.umd.min.js'
+  'https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js'
 ];
 
 self.addEventListener('install', (e) => {
